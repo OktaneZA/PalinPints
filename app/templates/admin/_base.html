@@ -6,7 +6,7 @@
   <title>{% block title %}PaliPints Admin{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
-<body>
+<body data-theme="{{ active_theme }}">
   <header class="admin-header">
     <div class="brand">PaliPints <span class="muted">admin</span></div>
     <nav>

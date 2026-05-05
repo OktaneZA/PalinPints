@@ -1,12 +1,21 @@
 :root {
+  /* Defaults match the marble theme. Each body[data-theme=...] block
+     at the bottom of this file overrides as needed so the admin UI
+     re-skins with the chosen display theme. */
   --fg: #1a1a1a;
   --muted: #6b7280;
   --bg: #f7f7f5;
   --card: #ffffff;
+  --surface-soft: #fbf7f1;
   --border: #d9d9d6;
   --accent: #b06a1e;
+  --accent-glow: rgba(176, 106, 30, 0.2);
   --danger: #b03434;
   --success: #2e7d4f;
+  --header-bg: #1f2c39;
+  --header-fg: #f3efe6;
+  --header-muted: #9aa5b1;
+  --input-bg: #ffffff;
 }
 * { box-sizing: border-box; }
 html, body {
@@ -18,14 +27,14 @@ html, body {
 .admin-header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px 24px;
-  background: #1f2c39; color: #f3efe6;
+  background: var(--header-bg); color: var(--header-fg);
   border-bottom: 3px solid var(--accent);
 }
 .admin-header .brand { font-weight: 700; font-size: 18px; letter-spacing: 1px; }
-.admin-header .muted { color: #9aa5b1; font-weight: 400; margin-left: 6px; }
+.admin-header .muted { color: var(--header-muted); font-weight: 400; margin-left: 6px; }
 .admin-header nav { display: flex; gap: 18px; }
 .admin-header nav a {
-  color: #f3efe6; text-decoration: none; padding: 6px 10px;
+  color: var(--header-fg); text-decoration: none; padding: 6px 10px;
   border-radius: 6px; font-size: 14px;
 }
 .admin-header nav a.active { background: rgba(255,255,255,0.08); color: var(--accent); }
@@ -79,7 +88,7 @@ h1 { margin-top: 0; }
   padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 4px;
-  background: #fff;
+  background: var(--input-bg);
   font-size: 14px;
   color: var(--fg);
 }
@@ -91,7 +100,7 @@ h1 { margin-top: 0; }
   border-radius: 6px;
   padding: 6px 12px 10px;
   margin: 0;
-  background: #fbfbfa;
+  background: var(--surface-soft);
 }
 .prices-fieldset legend {
   padding: 0 6px;
@@ -118,6 +127,8 @@ h1 { margin-top: 0; }
   padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--fg);
 }
 
 .tap-card-footer { margin-top: 10px; min-height: 16px; }
@@ -131,7 +142,7 @@ h1 { margin-top: 0; }
 .untappd-results {
   margin-top: 12px;
   padding: 12px 14px;
-  background: #fbf7f1;
+  background: var(--surface-soft);
   border: 1px solid var(--border);
   border-radius: 8px;
 }
@@ -146,14 +157,14 @@ h1 { margin-top: 0; }
   gap: 12px;
   align-items: center;
   padding: 8px 10px;
-  background: #ffffff;
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: 6px;
 }
 .ur-thumb {
   width: 56px; height: 56px;
   display: flex; align-items: center; justify-content: center;
-  background: #f0ece4;
+  background: var(--surface-soft);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -167,7 +178,7 @@ h1 { margin-top: 0; }
 .untappd-results [data-untappd-close] { margin-top: 10px; }
 
 .clear-form { margin-top: 10px; }
-.thumb { height: 32px; width: 32px; object-fit: contain; vertical-align: middle; border: 1px solid var(--border); border-radius: 4px; padding: 2px; background: #fff; }
+.thumb { height: 32px; width: 32px; object-fit: contain; vertical-align: middle; border: 1px solid var(--border); border-radius: 4px; padding: 2px; background: var(--card); }
 
 /* Buttons */
 .btn {
@@ -177,8 +188,8 @@ h1 { margin-top: 0; }
 }
 .btn-primary { background: var(--accent); color: #fff; }
 .btn-primary:hover { filter: brightness(1.05); }
-.btn-secondary { background: #fff; border-color: var(--border); }
-.btn-secondary:hover { background: #f0f0ee; }
+.btn-secondary { background: var(--card); color: var(--fg); border-color: var(--border); }
+.btn-secondary:hover { filter: brightness(0.97); }
 .btn-danger { background: var(--danger); color: #fff; }
 
 /* Settings */
@@ -197,6 +208,7 @@ h1 { margin-top: 0; }
 .settings-form input[type=number],
 .settings-form input[type=time] {
   padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--input-bg); color: var(--fg);
 }
 .settings-form .row-pair {
   display: grid;
@@ -216,9 +228,9 @@ h1 { margin-top: 0; }
   align-items: end;
 }
 .special-form label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 3px; }
-.special-form input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; }
+.special-form input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--fg); }
 .special-form h2 { grid-column: 1 / -1; margin: 0; }
-.special-row { background: #fbfbfa; }
+.special-row { background: var(--surface-soft); }
 
 /* Events admin — same chassis as specials, slightly more columns. */
 .event-form {
@@ -250,7 +262,7 @@ h1 { margin-top: 0; }
 .theme-card-desc { display: block; font-weight: 400; font-size: 12px; opacity: 0.75; margin-top: 4px; }
 .theme-option input:checked + .theme-card {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(176, 106, 30, 0.2);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 .theme-card-marble {
   background: linear-gradient(135deg, #f5f3ee 0%, #ddd8cf 100%);
@@ -280,4 +292,85 @@ h1 { margin-top: 0; }
   background: linear-gradient(135deg, #93BB48 0%, #688531 100%);
   color: #080808;
   border-color: #688531;
+}
+
+/* ============================================================
+   Per-theme palettes — admin re-skins to mirror the display.
+   ============================================================ */
+
+/* Marble — same as the :root defaults; no override needed. */
+
+body[data-theme="neon"] {
+  --fg: #f0f0ff;
+  --muted: #9090b0;
+  --bg: #0e0e15;
+  --card: #1a1825;
+  --surface-soft: #181425;
+  --border: #3a2f4a;
+  --accent: #f870c1;
+  --accent-glow: rgba(248, 112, 193, 0.25);
+  --header-bg: #07070d;
+  --header-fg: #f0f0ff;
+  --header-muted: #b8b8d8;
+  --input-bg: #1a1825;
+}
+
+body[data-theme="chalkboard"] {
+  --fg: #f3efe6;
+  --muted: #b9b3a5;
+  --bg: #2c3032;
+  --card: #393e40;
+  --surface-soft: #353a3c;
+  --border: #555a5d;
+  --accent: #f0a85a;
+  --accent-glow: rgba(240, 168, 90, 0.3);
+  --header-bg: #1d2022;
+  --header-fg: #f3efe6;
+  --header-muted: #c8c0b0;
+  --input-bg: #424749;
+}
+
+body[data-theme="palindrome1"] {
+  --fg: #080808;
+  --muted: #4a5b29;
+  --bg: #E9F1DA;
+  --card: #f5f9eb;
+  --surface-soft: #dde7c4;
+  --border: #b6c98e;
+  --accent: #688531;
+  --accent-glow: rgba(104, 133, 49, 0.2);
+  --header-bg: #688531;
+  --header-fg: #f5f9eb;
+  --header-muted: #d2dfb1;
+  --input-bg: #ffffff;
+}
+
+body[data-theme="palindrome2"] {
+  --fg: #E9F1DA;
+  --muted: #a8b89a;
+  --bg: #080808;
+  --card: #161616;
+  --surface-soft: #111111;
+  --border: #2e3724;
+  --accent: #93BB48;
+  --accent-glow: rgba(147, 187, 72, 0.25);
+  --header-bg: #050505;
+  --header-fg: #E9F1DA;
+  --header-muted: #a8b89a;
+  --input-bg: #161616;
+}
+
+body[data-theme="palindrome3"] {
+  --fg: #080808;
+  --muted: #2c3a14;
+  --bg: #688531;
+  --card: #79973a;
+  --surface-soft: #5d7929;
+  --border: #506924;
+  --accent: #080808;
+  --accent-glow: rgba(8, 8, 8, 0.25);
+  --header-bg: #4d6321;
+  --header-fg: #E9F1DA;
+  --header-muted: #c8d4b6;
+  --input-bg: #f5f9eb;
 }

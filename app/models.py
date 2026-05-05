@@ -29,7 +29,7 @@ def get_settings() -> dict[str, Any]:
 
 def update_settings(values: dict[str, Any]) -> None:
     allowed = {
-        "home_brewery", "home_brewery_logo_path", "display_style", "theme",
+        "home_brewery", "home_brewery_logo_path", "display_style", "display_scale", "theme",
         "day_theme", "night_theme",
         "latitude", "longitude",
         "override_day_start", "override_night_start",
@@ -203,7 +203,7 @@ def state_snapshot() -> dict[str, Any]:
     payload = {
         "settings": {
             k: settings[k] for k in (
-                "home_brewery", "home_brewery_logo_path", "display_style", "theme",
+                "home_brewery", "home_brewery_logo_path", "display_style", "display_scale", "theme",
                 "beers_per_page", "page_rotation_interval",
                 "color_ipa", "color_sour", "color_stout",
                 "color_lager", "color_belgian", "color_specialty",

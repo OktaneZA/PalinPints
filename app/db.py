@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS settings (
     home_brewery TEXT NOT NULL DEFAULT 'Palindrome Brewing Co',
     home_brewery_logo_path TEXT,
     display_style TEXT NOT NULL DEFAULT 'logo',
+    display_scale REAL NOT NULL DEFAULT 1.0,
     theme TEXT NOT NULL DEFAULT 'marble',
     day_theme TEXT NOT NULL DEFAULT 'marble',
     night_theme TEXT NOT NULL DEFAULT 'neon',
@@ -122,6 +123,10 @@ def init_db() -> None:
         existing_cols = {c[1] for c in conn.execute("PRAGMA table_info(settings)").fetchall()}
         if "theme" not in existing_cols:
             conn.execute("ALTER TABLE settings ADD COLUMN theme TEXT NOT NULL DEFAULT 'marble'")
+
+        # Display scale for non-1080p TVs (1.0 = native, 2.0 = 4K panel).
+        if "display_scale" not in existing_cols:
+            conn.execute("ALTER TABLE settings ADD COLUMN display_scale REAL NOT NULL DEFAULT 1.0")
 
         # Day/night theme switch + sunset cache columns.
         sunset_cols = {

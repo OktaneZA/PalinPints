@@ -133,4 +133,16 @@ def create_app() -> Flask:
     from .routes_display import serve_data_image
     app.add_url_rule("/data-image/<path:relpath>", "serve_data_image", serve_data_image)
 
+    # Make the active display theme available to every template (admin
+    # uses it to mirror the display's look). Computed lazily per-request
+    # so admin auto-switches alongside the display at sunrise/sunset.
+    @app.context_processor
+    def _inject_theme():
+        from .models import get_settings
+        from .sun import effective_theme
+        try:
+            return {"active_theme": effective_theme(get_settings())}
+        except Exception:
+            return {"active_theme": "marble"}
+
     return app
