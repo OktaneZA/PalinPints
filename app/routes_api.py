@@ -51,8 +51,8 @@ def untappd_select():
 
     hit = fetch_beer_detail(slug)
     payload = asdict(hit)
-    if hit.brewery_logo_url and hit.brewery_slug and not hit.error:
-        rel = download_brewery_logo(hit.brewery_slug, hit.brewery_logo_url)
+    if hit.brewery_logo_url and hit.brewery and not hit.error:
+        rel = download_brewery_logo(hit.brewery, hit.brewery_logo_url)
         payload["brewery_logo_local"] = rel
         if rel:
             payload["brewery_logo_local_url"] = f"/data-image/{rel}"

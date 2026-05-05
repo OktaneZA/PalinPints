@@ -1,14 +1,13 @@
 """Upload normalization and fallback resolution for tap imagery."""
 from __future__ import annotations
 
-import re
 import secrets
 from pathlib import Path
 
 from PIL import Image
 from werkzeug.datastructures import FileStorage
 
-from . import BREWERIES_DIR, UPLOADS_DIR
+from . import UPLOADS_DIR
 from .untappd import get_cached_brewery_logo
 
 ALLOWED_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
@@ -51,13 +50,8 @@ def resolve_logo_path(tap: dict, settings: dict) -> str | None:
     if brewery and home_brewery and brewery.lower() == home_brewery.lower() and home_logo:
         return home_logo
 
-    slug = _slugify(brewery)
-    cached = get_cached_brewery_logo(slug)
+    cached = get_cached_brewery_logo(brewery)
     if cached:
         return cached
 
     return None
-
-
-def _slugify(text: str) -> str:
-    return re.sub(r"[^a-z0-9_-]+", "-", text.lower()).strip("-")

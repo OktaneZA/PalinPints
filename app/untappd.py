@@ -313,17 +313,26 @@ def _fetch_brewery_logo_url(brewery_slug: str) -> str | None:
     return _fetch_brewery_info(brewery_slug).get("logo_url")
 
 
-def download_brewery_logo(brewery_slug: str, logo_url: str) -> str | None:
-    """Download a brewery logo into BREWERIES_DIR. Returns relative path."""
-    if not logo_url:
+def brewery_name_slug(brewery_name: str | None) -> str:
+    """Canonical slug derived from a brewery's display name. The same string is
+    used as the cache key on both write (download) and read (display)."""
+    if not brewery_name:
+        return ""
+    return re.sub(r"[^a-z0-9_-]+", "-", brewery_name.lower()).strip("-")
+
+
+def download_brewery_logo(brewery_name: str, logo_url: str) -> str | None:
+    """Download a brewery logo into BREWERIES_DIR keyed by the brewery's
+    display-name slug. Returns the relative path to the saved image."""
+    if not logo_url or not brewery_name:
         return None
     ext = ".png"
     m = re.search(r"\.(png|jpg|jpeg|gif|webp)(?:\?|$)", logo_url, re.IGNORECASE)
     if m:
         ext = "." + m.group(1).lower()
 
-    safe_slug = re.sub(r"[^a-z0-9_-]+", "-", brewery_slug.lower()).strip("-") or "brewery"
-    dest = BREWERIES_DIR / f"{safe_slug}{ext}"
+    slug = brewery_name_slug(brewery_name) or "brewery"
+    dest = BREWERIES_DIR / f"{slug}{ext}"
 
     try:
         with httpx.Client(timeout=TIMEOUT, follow_redirects=True,
@@ -338,18 +347,19 @@ def download_brewery_logo(brewery_slug: str, logo_url: str) -> str | None:
     rel = Path("breweries") / dest.name
     get_db().execute(
         "INSERT OR REPLACE INTO brewery_logos (brewery_slug, image_path, fetched_at) VALUES (?, ?, ?)",
-        (safe_slug, str(rel).replace("\\", "/"), int(time.time())),
+        (slug, str(rel).replace("\\", "/"), int(time.time())),
     )
     get_db().commit()
     return str(rel).replace("\\", "/")
 
 
-def get_cached_brewery_logo(brewery_slug: str | None) -> str | None:
-    if not brewery_slug:
+def get_cached_brewery_logo(brewery_name: str | None) -> str | None:
+    """Look up a cached logo by brewery display name (slugified)."""
+    slug = brewery_name_slug(brewery_name)
+    if not slug:
         return None
-    safe_slug = re.sub(r"[^a-z0-9_-]+", "-", brewery_slug.lower()).strip("-")
     row = get_db().execute(
         "SELECT image_path FROM brewery_logos WHERE brewery_slug = ?",
-        (safe_slug,),
+        (slug,),
     ).fetchone()
     return row["image_path"] if row else None
