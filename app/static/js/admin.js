@@ -153,8 +153,10 @@
   }
 
   function autoSelectCategoryFromSubstyle(form, substyle) {
+    // Always re-evaluate when an Untappd result is applied — the previous
+    // category may belong to the previous beer on this row.
     const driver = form.querySelector('[data-substyle-driver]');
-    if (!driver || driver.value || !substyle) return;
+    if (!driver || !substyle) return;
     const lc = substyle.toLowerCase();
     for (const [cat, options] of Object.entries(SUBSTYLES)) {
       if (options.some(o => o.toLowerCase() === lc)) {
@@ -163,13 +165,15 @@
         return;
       }
     }
-    // Loose match: pick category whose name appears in substyle, e.g. "IPA"
+    // Loose match — Untappd's sub-style strings often contain a clear keyword.
+    // Order matters: more-specific keywords first, so "Belgian Strong Pale
+    // Ale" wins Belgian over IPA, and "Lambic" wins Sour over its style hints.
     const guesses = [
-      [/\bipa\b|pale\s+ale|blonde/i, 'IPA & Pale Ales'],
+      [/saison|tripel|dubbel|quadrupel|witbier|trappist|farmhouse|belgian|bi[èe]re\s+de\s+garde/i, 'Belgian & Farmhouse'],
       [/sour|wild|gose|lambic|brett|berliner|flanders/i, 'Sour & Wild Ales'],
       [/stout|porter/i, 'Stout & Porter'],
-      [/lager|pilsner|helles|bock|m[äa]rzen|kölsch|altbier|schwarz/i, 'Lager & Pilsner'],
-      [/saison|tripel|dubbel|quadrupel|witbier|trappist|farmhouse|belgian/i, 'Belgian & Farmhouse'],
+      [/\bipa\b|pale\s+ale|blonde\s+ale|cream\s+ale/i, 'IPA & Pale Ales'],
+      [/lager|pilsner|helles|bock|m[äa]rzen|k[öo]lsch|altbier|schwarz/i, 'Lager & Pilsner'],
     ];
     for (const [re, cat] of guesses) {
       if (re.test(lc)) { driver.value = cat; refreshSubstyleOptions(form); return; }
