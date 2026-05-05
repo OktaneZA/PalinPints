@@ -21,12 +21,36 @@
     <img class="brand-logo" src="{{ url_for('static', filename='img/palindrome-logo.png') }}" onerror="this.style.display='none'" alt="">
   </header>
 
+  {# Determine which price columns to render based on whether any active
+     tap has that kind enabled. Hides empty columns entirely. #}
+  {% set ns = namespace(third=false, half=false, pint=false, takeaway=false) %}
+  {% for cat, beers in grouped %}{% for tap in beers %}
+    {% if tap.price_third_enabled and tap.price_third is not none %}{% set ns.third = true %}{% endif %}
+    {% if tap.price_half_enabled and tap.price_half is not none %}{% set ns.half = true %}{% endif %}
+    {% if tap.price_pint_enabled and tap.price_pint is not none %}{% set ns.pint = true %}{% endif %}
+    {% if tap.price_takeaway_enabled and tap.price_takeaway is not none %}{% set ns.takeaway = true %}{% endif %}
+  {% endfor %}{% endfor %}
+  {% set price_cols = [] %}
+  {% if ns.third %}{% set _ = price_cols.append(('third', '⅓')) %}{% endif %}
+  {% if ns.half %}{% set _ = price_cols.append(('half', '½')) %}{% endif %}
+  {% if ns.pint %}{% set _ = price_cols.append(('pint', 'pint')) %}{% endif %}
+  {% if ns.takeaway %}{% set _ = price_cols.append(('takeaway', 'takeaway')) %}{% endif %}
+
   <main class="display-body">
-    <div class="categories" id="categories">
+    <div class="categories" id="categories" style="--price-cols: {{ price_cols|length }};">
       {% if not grouped %}
         <div class="empty">
           <img src="{{ url_for('static', filename='img/palindrome-logo.png') }}" onerror="this.style.display='none'" alt="">
           <p>Coming soon</p>
+        </div>
+      {% endif %}
+      {% if price_cols %}
+        <div class="prices-header">
+          <div class="prices">
+            {% for kind, label_text in price_cols %}
+              <div class="price-head">{{ label_text }}</div>
+            {% endfor %}
+          </div>
         </div>
       {% endif %}
       {% for cat, beers in grouped %}
@@ -52,33 +76,66 @@
               </div>
             </div>
             <div class="prices">
-              {% if tap.price_half is not none %}<div><span class="price">£{{ '%.2f' % tap.price_half }}</span><span class="size">½</span></div>{% endif %}
-              {% if tap.price_pint is not none %}<div><span class="price">£{{ '%.2f' % tap.price_pint }}</span><span class="size">pint</span></div>{% endif %}
-              {% if tap.price_takeaway is not none %}<div><span class="price">£{{ '%.2f' % tap.price_takeaway }}</span><span class="size">takeaway</span></div>{% endif %}
+              {% for kind, label_text in price_cols %}
+                {% set price = tap['price_' ~ kind] %}
+                {% set enabled = tap['price_' ~ kind ~ '_enabled'] %}
+                <div class="price-cell">
+                  {% if enabled and price is not none %}
+                    <span class="price">£{{ '%.2f' % price }}</span>
+                  {% endif %}
+                </div>
+              {% endfor %}
             </div>
           </article>
         {% endfor %}
       {% endfor %}
     </div>
 
-    {% if specials %}
-    <aside class="specials-panel">
-      <h2>SPECIALS</h2>
-      <ul>
-        {% for s in specials %}
-          <li>
-            <div class="s-title">{{ s.title }}</div>
-            {% if s.description %}<div class="s-desc">{{ s.description }}</div>{% endif %}
-            {% if s.price is not none %}<div class="s-price">£{{ '%.2f' % s.price }}</div>{% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+    <aside class="side-panels">
+      {% if specials %}
+      <section class="specials-panel">
+        <h2>SPECIALS</h2>
+        <ul>
+          {% for s in specials %}
+            <li>
+              <div class="s-title">{{ s.title }}</div>
+              {% if s.description %}<div class="s-desc">{{ s.description }}</div>{% endif %}
+              {% if s.price is not none %}<div class="s-price">£{{ '%.2f' % s.price }}</div>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
+
+      {% if events %}
+      <section class="events-panel">
+        <h2>EVENTS</h2>
+        <ul>
+          {% for e in events %}
+            <li class="event-item">
+              <div class="ev-main">
+                <div class="ev-name">{{ e.name }}</div>
+                {% if e.event_date %}<div class="ev-date">{{ e.event_date }}</div>{% endif %}
+                {% if e.location %}<div class="ev-location">{{ e.location }}</div>{% endif %}
+              </div>
+              {% if e.url %}
+              <div class="ev-qr">
+                <img src="{{ url_for('display.qr_code', data=e.url) }}" alt="QR">
+              </div>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endif %}
     </aside>
-    {% endif %}
   </main>
 
   <footer class="display-footer">
     <span class="page-indicator" id="pageIndicator"></span>
+    <div class="display-clock">
+      <div class="clock-line clock-now"><span id="clockNow">— —</span></div>
+    </div>
   </footer>
 
   <script src="{{ url_for('static', filename='js/display.js') }}"></script>

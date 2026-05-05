@@ -6,13 +6,18 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from . import STYLE_CATEGORIES, STYLE_SUBSTYLES
 from .images import save_upload
 from .models import (
+    EVENT_LIMIT,
+    add_event,
     add_special,
     clear_tap,
+    delete_event,
     delete_special,
     get_settings,
     get_tap,
+    list_events,
     list_specials,
     list_taps,
+    update_event,
     update_special,
     update_tap,
     update_settings,
@@ -56,6 +61,9 @@ def taps():
     )
 
 
+PRICE_KINDS = ("third", "half", "pint", "takeaway")
+
+
 @bp.route("/taps/<int:tap_number>", methods=["POST"])
 def save_tap(tap_number: int):
     if not get_tap(tap_number):
@@ -70,18 +78,20 @@ def save_tap(tap_number: int):
     brewery = (f.get("brewery") or "").strip() or None
     beer_name = (f.get("beer_name") or "").strip() or None
     abv = _to_float(f.get("abv"))
-    price_half = _to_float(f.get("price_half"))
-    price_pint = _to_float(f.get("price_pint"))
 
-    # Mandatory fields apply when the tap is active. Inactive rows can be
-    # saved/cleared with anything missing.
+    prices: dict[str, float | None] = {}
+    enabled: dict[str, int] = {}
+    for kind in PRICE_KINDS:
+        prices[kind] = _to_float(f.get(f"price_{kind}"))
+        enabled[kind] = 1 if f.get(f"price_{kind}_enabled") else 0
+    any_priced = any(enabled[k] and prices[k] is not None for k in PRICE_KINDS)
+
     if active:
         missing = []
         if not brewery: missing.append("brewery")
         if not beer_name: missing.append("beer name")
         if abv is None: missing.append("ABV %")
-        if price_half is None: missing.append("½ pint price")
-        if price_pint is None: missing.append("pint price")
+        if not any_priced: missing.append("at least one enabled price")
         if missing:
             flash(
                 f"Tap {tap_number} not saved — missing required field(s): "
@@ -99,12 +109,12 @@ def save_tap(tap_number: int):
         "abv": abv,
         "ibu": _to_int(f.get("ibu")),
         "location": (f.get("location") or "").strip() or None,
-        "price_half": price_half,
-        "price_pint": price_pint,
-        "price_takeaway": _to_float(f.get("price_takeaway")),
         "color_override": (f.get("color_override") or None) if f.get("use_color_override") else None,
         "untappd_slug": f.get("untappd_slug") or None,
     }
+    for kind in PRICE_KINDS:
+        values[f"price_{kind}"] = prices[kind]
+        values[f"price_{kind}_enabled"] = enabled[kind]
     if image_path:
         values["image_override_path"] = image_path
     elif f.get("clear_image"):
@@ -183,3 +193,48 @@ def delete_special_route(special_id: int):
     delete_special(special_id)
     flash("Special deleted.", "success")
     return redirect(url_for("admin.specials"))
+
+
+@bp.route("/events", methods=["GET", "POST"])
+def events():
+    if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        if not name:
+            flash("Event name is required.", "error")
+            return redirect(url_for("admin.events"))
+        event_date = (request.form.get("event_date") or "").strip() or None
+        location = (request.form.get("location") or "").strip() or None
+        url = (request.form.get("url") or "").strip() or None
+        new_id = add_event(name, event_date, location, url)
+        if new_id is None:
+            flash(f"Maximum of {EVENT_LIMIT} events reached — remove one first.", "error")
+        else:
+            flash("Event added.", "success")
+        return redirect(url_for("admin.events"))
+    return render_template(
+        "admin/events.html",
+        events=list_events(),
+        event_limit=EVENT_LIMIT,
+    )
+
+
+@bp.route("/events/<int:event_id>/update", methods=["POST"])
+def update_event_route(event_id: int):
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        flash("Event name is required.", "error")
+        return redirect(url_for("admin.events"))
+    event_date = (request.form.get("event_date") or "").strip() or None
+    location = (request.form.get("location") or "").strip() or None
+    url = (request.form.get("url") or "").strip() or None
+    active = 1 if request.form.get("active") else 0
+    update_event(event_id, name, event_date, location, url, active)
+    flash("Event updated.", "success")
+    return redirect(url_for("admin.events"))
+
+
+@bp.route("/events/<int:event_id>/delete", methods=["POST"])
+def delete_event_route(event_id: int):
+    delete_event(event_id)
+    flash("Event deleted.", "success")
+    return redirect(url_for("admin.events"))

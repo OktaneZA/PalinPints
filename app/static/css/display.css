@@ -34,7 +34,9 @@ html, body {
 
 .beer-row {
   display: grid;
-  grid-template-columns: 84px 64px 1fr 280px;
+  /* 2/3 for category + logo + beer info, 1/3 for prices — keeps prices
+     anchored to a consistent x-position whether the list is full or sparse. */
+  grid-template-columns: 84px 64px 2fr 1fr;
   align-items: center;
   gap: 18px;
   padding: 10px 0;
@@ -70,32 +72,103 @@ html, body {
 .line-2 span { white-space: nowrap; }
 
 .prices {
-  display: flex; gap: 18px;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: repeat(var(--price-cols, 3), 1fr);
+  gap: 8px;
   align-items: center;
 }
-.prices > div {
+.price-cell {
   display: flex; flex-direction: column; align-items: center;
-  min-width: 64px;
+  min-height: 1.6em;
 }
 
-.specials-panel {
-  border-radius: 12px;
-  padding: 20px 22px;
-  align-self: end;
+/* Column headers above the beer rows — labels appear once, not per row. */
+.prices-header {
+  display: grid;
+  grid-template-columns: 84px 64px 2fr 1fr;
+  gap: 18px;
+  padding: 4px 0 8px;
+  opacity: 0.7;
+}
+.prices-header > .prices { grid-column: 4; }
+.prices-header .price-head {
+  text-align: center;
+  font-size: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Right-hand column: specials at the top, events beneath. */
+.side-panels {
+  display: flex; flex-direction: column;
+  gap: 16px;
+  align-self: start;
   max-height: 100%;
   overflow: hidden;
 }
-.specials-panel h2 { margin: 0 0 12px; }
-.specials-panel ul { list-style: none; margin: 0; padding: 0; }
-.specials-panel li { padding: 10px 0; }
-.specials-panel li:last-child { border-bottom: none !important; }
+
+.specials-panel,
+.events-panel {
+  border-radius: 12px;
+  padding: 18px 20px;
+  overflow: hidden;
+}
+.specials-panel h2,
+.events-panel h2 { margin: 0 0 10px; }
+.specials-panel ul,
+.events-panel ul { list-style: none; margin: 0; padding: 0; }
+.specials-panel li { padding: 9px 0; }
+.specials-panel li:last-child,
+.events-panel li:last-child { border-bottom: none !important; }
+
+.events-panel .event-item {
+  display: grid;
+  grid-template-columns: 1fr 72px;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 0;
+}
+.events-panel .ev-name { font-weight: 700; font-size: 22px; line-height: 1.2; }
+.events-panel .ev-date,
+.events-panel .ev-location { font-size: 16px; opacity: 0.85; line-height: 1.3; }
+.events-panel .ev-qr {
+  width: 72px; height: 72px;
+  background: #fff;
+  border-radius: 6px;
+  padding: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.events-panel .ev-qr img { width: 100%; height: 100%; display: block; }
 
 .display-footer {
   position: fixed;
   bottom: 12px;
-  right: 24px;
+  left: 0; right: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 24px;
+  pointer-events: none;
+}
+.display-footer .page-indicator {
+  grid-column: 2;
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: 4px;
+  font-weight: 700;
+}
+.display-footer .display-clock {
+  grid-column: 3;
+  justify-self: end;
+  text-align: right;
+  letter-spacing: 1px;
+  line-height: 1.2;
+}
+.display-footer .clock-line {
+  font-size: 22px;
   letter-spacing: 2px;
+  font-weight: 700;
 }
 
 .empty {

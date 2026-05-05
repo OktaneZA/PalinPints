@@ -110,12 +110,14 @@ body[data-theme="chalkboard"] .prices .size {
   font-family: 'Special Elite', monospace;
 }
 
-body[data-theme="chalkboard"] .specials-panel {
+body[data-theme="chalkboard"] .specials-panel,
+body[data-theme="chalkboard"] .events-panel {
   background: rgba(0,0,0,0.35);
   border: 2px dashed #f0a85a;
   box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
 }
-body[data-theme="chalkboard"] .specials-panel h2 {
+body[data-theme="chalkboard"] .specials-panel h2,
+body[data-theme="chalkboard"] .events-panel h2 {
   font-family: 'Caveat', cursive;
   letter-spacing: 1px;
   color: #f0a85a;
@@ -129,18 +131,18 @@ body[data-theme="chalkboard"] .specials-panel li {
 }
 body[data-theme="chalkboard"] .s-title {
   font-family: 'Caveat', cursive;
-  font-weight: 700; font-size: 22px;
+  font-weight: 700; font-size: 26px;
   color: #f3efe6;
 }
 body[data-theme="chalkboard"] .s-desc {
   font-family: 'Special Elite', monospace;
-  font-size: 13px; color: #c8c0b0;
+  font-size: 16px; color: #c8c0b0;
 }
 body[data-theme="chalkboard"] .s-price {
   color: #f0a85a;
   font-family: 'Caveat', cursive;
   font-weight: 700;
-  font-size: 24px;
+  font-size: 28px;
   margin-top: 4px;
 }
 

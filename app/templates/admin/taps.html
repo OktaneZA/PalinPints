@@ -5,7 +5,7 @@
 <p class="hint">
   Home brewery: <strong>{{ settings.home_brewery }}</strong> — pre-fills the brewery on new taps.
   <br>
-  Required when active: brewery, beer name, ABV %, ½ pint price, pint price. Other fields optional.
+  Required when active: brewery, beer name, ABV %, and at least one enabled price. Other fields optional.
 </p>
 
 <datalist id="brewery-list"></datalist>
@@ -59,15 +59,26 @@
       <label>Location
         <input type="text" name="location" value="{{ tap.location or '' }}" placeholder="e.g. Faversham, UK" data-field="location">
       </label>
-      <label>½ pint £ <span class="req">*</span>
-        <input type="number" step="0.05" name="price_half" value="{{ tap.price_half if tap.price_half is not none else '' }}">
-      </label>
-      <label>Pint £ <span class="req">*</span>
-        <input type="number" step="0.05" name="price_pint" value="{{ tap.price_pint if tap.price_pint is not none else '' }}">
-      </label>
-      <label>Takeaway £
-        <input type="number" step="0.05" name="price_takeaway" value="{{ tap.price_takeaway if tap.price_takeaway is not none else '' }}">
-      </label>
+      <fieldset class="prices-fieldset">
+        <legend>Prices <span class="req">*</span><span class="hint-inline"> (tick the ones you sell)</span></legend>
+        {% set price_rows = [
+          ('third',    '⅓ pint £', tap.price_third,    tap.price_third_enabled),
+          ('half',     '½ pint £', tap.price_half,     tap.price_half_enabled),
+          ('pint',     'Pint £',   tap.price_pint,     tap.price_pint_enabled),
+          ('takeaway', 'Takeaway £', tap.price_takeaway, tap.price_takeaway_enabled),
+        ] %}
+        {% for kind, label_text, price, enabled in price_rows %}
+        <div class="price-row">
+          <label class="price-toggle">
+            <input type="checkbox" name="price_{{ kind }}_enabled" value="1" {% if enabled %}checked{% endif %}>
+            {{ label_text }}
+          </label>
+          <input type="number" step="0.05" name="price_{{ kind }}"
+                 value="{{ price if price is not none else '' }}"
+                 placeholder="0.00">
+        </div>
+        {% endfor %}
+      </fieldset>
 
       <label class="color-override">
         <input type="checkbox" name="use_color_override" value="1" {% if tap.color_override %}checked{% endif %}>

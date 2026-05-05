@@ -1,6 +1,6 @@
 # PaliPints
 
-Digital draft list for Palindrome Brewing Co — a Python/Flask app that runs on a Raspberry Pi, drives a horizontal TV via HDMI in Chromium kiosk mode, and exposes a LAN-only admin web UI for managing taps, prices, and specials.
+Digital draft list for Palindrome Brewing Co — a Python/Flask app that runs on a Raspberry Pi, drives a horizontal TV via HDMI in Chromium kiosk mode, and exposes a LAN-only admin web UI for managing taps, prices, specials, and upcoming events (with scannable QR codes).
 
 See [REQUIREMENTS.md](REQUIREMENTS.md) for the full spec.
 

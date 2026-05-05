@@ -83,13 +83,15 @@ body[data-theme="marble"] .prices .size {
   font-weight: 700;
 }
 
-body[data-theme="marble"] .specials-panel {
+body[data-theme="marble"] .specials-panel,
+body[data-theme="marble"] .events-panel {
   background: rgba(255,255,255,0.7);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(138,111,58,0.3);
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
 }
-body[data-theme="marble"] .specials-panel h2 {
+body[data-theme="marble"] .specials-panel h2,
+body[data-theme="marble"] .events-panel h2 {
   font-family: 'Playfair Display', serif;
   font-weight: 900;
   letter-spacing: 3px;
@@ -99,13 +101,13 @@ body[data-theme="marble"] .specials-panel h2 {
 body[data-theme="marble"] .specials-panel li {
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
-body[data-theme="marble"] .s-title { font-weight: 700; font-size: 18px; color: #1a1a1a; }
-body[data-theme="marble"] .s-desc { color: #6d6557; font-size: 13px; font-style: italic; }
+body[data-theme="marble"] .s-title { font-weight: 700; font-size: 22px; color: #1a1a1a; }
+body[data-theme="marble"] .s-desc { color: #6d6557; font-size: 16px; font-style: italic; }
 body[data-theme="marble"] .s-price {
   color: #8a6f3a;
   font-family: 'Playfair Display', serif;
   font-weight: 900;
-  font-size: 20px;
+  font-size: 24px;
   margin-top: 4px;
 }
 

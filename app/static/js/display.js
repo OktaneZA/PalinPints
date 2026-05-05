@@ -11,6 +11,16 @@
 
   const rows = () => Array.from(document.querySelectorAll('.beer-row'));
   const indicator = document.getElementById('pageIndicator');
+  const clockNowEl = document.getElementById('clockNow');
+
+  function fmtDateTime(d) {
+    const date = d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${date}  ${time}`;
+  }
+  function tickClock() {
+    if (clockNowEl) clockNowEl.textContent = fmtDateTime(new Date());
+  }
 
   function paginate() {
     const all = rows();
@@ -46,5 +56,7 @@
 
   paginate();
   startRotation();
+  tickClock();
+  setInterval(tickClock, 1000);
   setInterval(pollState, pollMs);
 })();

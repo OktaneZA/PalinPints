@@ -13,6 +13,7 @@
       <a href="{{ url_for('admin.taps') }}" {% if request.endpoint == 'admin.taps' %}class="active"{% endif %}>Taps</a>
       <a href="{{ url_for('admin.settings') }}" {% if request.endpoint == 'admin.settings' %}class="active"{% endif %}>Settings</a>
       <a href="{{ url_for('admin.specials') }}" {% if request.endpoint == 'admin.specials' %}class="active"{% endif %}>Specials</a>
+      <a href="{{ url_for('admin.events') }}" {% if request.endpoint == 'admin.events' %}class="active"{% endif %}>Events</a>
       <a href="{{ url_for('display.display') }}" target="_blank" rel="noopener">Open display ↗</a>
     </nav>
   </header>

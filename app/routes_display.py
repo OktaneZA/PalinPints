@@ -1,7 +1,11 @@
 """Public display routes: the TV view and its state endpoint."""
 from __future__ import annotations
 
-from flask import Blueprint, abort, jsonify, render_template, send_file, url_for
+import io
+
+import qrcode
+import qrcode.image.svg
+from flask import Blueprint, Response, abort, jsonify, render_template, request, send_file, url_for
 
 from . import IMAGES_DIR, STYLE_CATEGORIES, THEME_HOP_FALLBACK
 from .images import resolve_logo_path
@@ -37,9 +41,24 @@ def display():
         settings=settings,
         grouped=grouped,
         specials=snap["specials"],
+        events=snap["events"],
         version_hash=snap["version_hash"],
         fallback_logo_url=fallback,
     )
+
+
+@bp.route("/qr")
+def qr_code():
+    """Render a URL as an SVG QR code. Used by the events panel on the TV."""
+    data = (request.args.get("data") or "").strip()
+    if not data:
+        abort(400)
+    factory = qrcode.image.svg.SvgPathImage
+    img = qrcode.make(data, image_factory=factory, box_size=10, border=2)
+    buf = io.BytesIO()
+    img.save(buf)
+    return Response(buf.getvalue(), mimetype="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=3600"})
 
 
 @bp.route("/api/state")
@@ -50,6 +69,8 @@ def api_state():
     for tap in snap["taps"]:
         rel = resolve_logo_path(tap, settings)
         tap["logo_url"] = url_for("serve_data_image", relpath=rel) if rel else fallback
+    for ev in snap.get("events", []):
+        ev["qr_url"] = url_for("display.qr_code", data=ev["url"]) if ev.get("url") else None
     snap["fallback_logo_url"] = fallback
     return jsonify(snap)
 

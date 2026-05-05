@@ -41,12 +41,12 @@ Served by the same Python process that serves the display. Bound to the Pi's LAN
   - ABV (%)
   - IBU
   - Location (free text, e.g. "Milwaukee, WI")
-  - Half-pint price (GBP)
-  - Pint price (GBP)
-  - Takeaway price (GBP)
+  - Prices (GBP) — four optional kinds, each with an enable checkbox + value:
+    1/3 pint, 1/2 pint, pint, takeaway. Only enabled prices show on the display.
   - Beer color override (color picker; blank = use category default)
   - Image override (file upload; blank = use scraped/fallback)
   - "Active" toggle (inactive taps are hidden from the display)
+- A tap can only be saved as **active** when brewery, beer name, ABV, and at least one enabled price are filled in.
 - "Search the web" button per row — fetches name, brewery, sub-style, ABV, IBU, location, and the brewery's logo. All fields stay editable after autofill.
 - Drag-to-reorder is **not** required; tap number is the canonical order.
 
@@ -54,6 +54,7 @@ Served by the same Python process that serves the display. Bound to the Pi's LAN
 - Home brewery name (used as the default for new taps; defaults to "Palindrome Brewing Co").
 - Home brewery logo (file upload — replaces the scraped logo for any beer brewed by the home brewery).
 - Display style: **Brewery logo** OR **Beer color** (radio).
+- Theme picker (six themes — see [README.md](README.md)).
 - Beers per page on the display (default 12; range 6–14).
 - Page rotation interval in seconds (default 15).
 - Default color per style category (six color pickers; pre-populated with the palette in §"Color defaults").
@@ -63,7 +64,16 @@ Served by the same Python process that serves the display. Bound to the Pi's LAN
   - Title (e.g. "IPA Flight")
   - Description (optional, e.g. "4 × 1/3 pint")
   - Price (GBP)
-- Specials render in a fixed panel on the bottom-right of the TV display and do not rotate with the tap pages.
+- Specials render in a fixed panel on the **top-right** of the TV display and do not rotate with the tap pages.
+
+**FR1.4 Events page**
+- Add/edit/remove up to **3** events. Each event has:
+  - Name (required)
+  - Date (optional)
+  - Location (optional, free text)
+  - URL (optional — when present, rendered as a QR code on the display so customers can scan it)
+- Per-event "Active" toggle — inactive events stay saved but don't appear on the display.
+- Events render in a fixed panel on the right of the TV display, **directly under the Specials panel**, in the same styling. The whole panel is hidden when there are no active events.
 
 ### FR2. TV display view
 
@@ -77,9 +87,12 @@ Single fullscreen page at `/`. Designed for **1920×1080 horizontal**. Auto-poll
   4. Lager & Pilsner
   5. Belgian & Farmhouse
   6. Historical & Specialty
-- Each beer row shows: tap number, brewery, beer name, sub-style, ABV, IBU, location, three prices (½ / pint / takeaway in GBP), and either the brewery logo (logo style) or a colored disc/strip in the beer's color (color style).
-- If active taps exceed `beers_per_page`, beers split across pages and the display rotates between pages every `page_rotation_interval` seconds. Pagination indicator: "1 of N" shown small on the page (like the reference screenshot).
-- **Specials panel** in the bottom-right corner: persistent, does not rotate with tap pages. Hidden if no specials are configured.
+- Each beer row shows: tap number, brewery, beer name, sub-style, ABV, IBU, location, the enabled prices (any subset of ⅓ / ½ / pint / takeaway in GBP), and either the brewery logo (logo style) or a colored disc/strip in the beer's color (color style).
+- Prices align in fixed columns across all rows. Column headers (⅓ / ½ / pint / takeaway) appear once at the top of the list — only columns that have at least one beer using that price kind are shown.
+- If active taps exceed `beers_per_page`, beers split across pages and the display rotates between pages every `page_rotation_interval` seconds. Pagination indicator: "Page N of M" centered along the bottom.
+- **Specials panel** in the top-right corner: persistent, does not rotate with tap pages. Hidden if no specials are configured.
+- **Events panel** below the Specials panel (top-right column): persistent, does not rotate. Each active event shows name, date, location, and a QR code generated from the URL. Hidden if no active events.
+- Bottom-right shows the current date + time, refreshed client-side every second.
 - Empty state: if zero active taps, show the Palindrome logo centered with "Coming soon".
 
 ### FR3. Web search integration
@@ -104,7 +117,11 @@ When the display style is "Brewery logo":
 
 ### FR5. Live updates
 
-Display polls `/api/state` every 5 seconds. State endpoint returns a JSON snapshot of all active taps + specials + settings. The display re-renders only if the state hash has changed.
+Display polls `/api/state` every 5 seconds. State endpoint returns a JSON snapshot of all active taps + specials + events + settings. The display re-renders only if the state hash has changed.
+
+### FR6. QR codes for events
+
+Event URLs are rendered as scannable QR codes server-side via the `/qr?data=…` endpoint (SVG output). The display embeds these directly so the codes scale crisply at any TV resolution.
 
 ---
 

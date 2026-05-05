@@ -76,12 +76,14 @@ body[data-theme="palindrome2"] .prices .size {
   text-transform: uppercase;
 }
 
-body[data-theme="palindrome2"] .specials-panel {
+body[data-theme="palindrome2"] .specials-panel,
+body[data-theme="palindrome2"] .events-panel {
   background: rgba(147, 187, 72, 0.06);
   border: 2px solid #93BB48;
   box-shadow: 0 0 20px rgba(147, 187, 72, 0.18), inset 0 0 16px rgba(147, 187, 72, 0.08);
 }
-body[data-theme="palindrome2"] .specials-panel h2 {
+body[data-theme="palindrome2"] .specials-panel h2,
+body[data-theme="palindrome2"] .events-panel h2 {
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 5px;
   color: #93BB48;
@@ -91,12 +93,12 @@ body[data-theme="palindrome2"] .specials-panel h2 {
 body[data-theme="palindrome2"] .specials-panel li {
   border-bottom: 1px solid rgba(147, 187, 72, 0.2);
 }
-body[data-theme="palindrome2"] .s-title { font-weight: 700; font-size: 18px; color: #E9F1DA; }
-body[data-theme="palindrome2"] .s-desc { color: #a8b89a; font-size: 13px; }
+body[data-theme="palindrome2"] .s-title { font-weight: 700; font-size: 22px; color: #E9F1DA; }
+body[data-theme="palindrome2"] .s-desc { color: #a8b89a; font-size: 16px; }
 body[data-theme="palindrome2"] .s-price {
   color: #93BB48;
   font-weight: 700;
-  font-size: 20px;
+  font-size: 24px;
   margin-top: 4px;
   text-shadow: 0 0 8px rgba(147, 187, 72, 0.5);
 }

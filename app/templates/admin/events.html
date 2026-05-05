@@ -1,0 +1,40 @@
+{% extends "admin/_base.html" %}
+{% block title %}Events · PaliPints{% endblock %}
+{% block content %}
+<h1>Events</h1>
+<p class="hint">
+  Events show under Specials in the top-right of the TV display. The URL becomes a QR code customers can scan.
+  Maximum {{ event_limit }} events. Inactive events stay saved but don't appear on the display.
+</p>
+
+{% if events|length < event_limit %}
+<form method="post" class="special-form event-form">
+  <h2>Add event</h2>
+  <label>Name <input type="text" name="name" required placeholder="e.g. Friday tap takeover"></label>
+  <label>Date <input type="date" name="event_date"></label>
+  <label>Location <input type="text" name="location" placeholder="e.g. The Taproom"></label>
+  <label>URL (for QR) <input type="url" name="url" placeholder="https://..."></label>
+  <button type="submit" class="btn btn-primary">Add</button>
+</form>
+{% else %}
+<p class="muted">Maximum of {{ event_limit }} events reached. Remove one to add another.</p>
+{% endif %}
+
+<h2>Current events</h2>
+{% if not events %}
+  <p class="muted">No events yet.</p>
+{% endif %}
+{% for e in events %}
+<form method="post" action="{{ url_for('admin.update_event_route', event_id=e.id) }}" class="special-form event-form special-row">
+  <label>Name <input type="text" name="name" value="{{ e.name }}" required></label>
+  <label>Date <input type="date" name="event_date" value="{{ e.event_date or '' }}"></label>
+  <label>Location <input type="text" name="location" value="{{ e.location or '' }}"></label>
+  <label>URL (for QR) <input type="url" name="url" value="{{ e.url or '' }}"></label>
+  <label class="active-toggle">
+    <input type="checkbox" name="active" value="1" {% if e.active %}checked{% endif %}> Active
+  </label>
+  <button type="submit" class="btn btn-secondary">Update</button>
+  <button type="submit" class="btn btn-danger" formaction="{{ url_for('admin.delete_event_route', event_id=e.id) }}" onclick="return confirm('Delete this event?');">Delete</button>
+</form>
+{% endfor %}
+{% endblock %}

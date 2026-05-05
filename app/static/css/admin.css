@@ -85,6 +85,41 @@ h1 { margin-top: 0; }
 }
 .tap-grid label.color-override { flex-direction: row; align-items: center; gap: 8px; }
 
+.prices-fieldset {
+  grid-column: span 2;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px 10px;
+  margin: 0;
+  background: #fbfbfa;
+}
+.prices-fieldset legend {
+  padding: 0 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.prices-fieldset .hint-inline { font-weight: 400; font-style: italic; }
+.prices-fieldset .price-row {
+  display: grid;
+  grid-template-columns: 1fr 110px;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 0;
+}
+.prices-fieldset .price-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--fg);
+  margin: 0;
+}
+.prices-fieldset input[type="number"] {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
 .tap-card-footer { margin-top: 10px; min-height: 16px; }
 .untappd-status { font-size: 12px; color: var(--muted); }
 .untappd-status.error { color: var(--danger); }
@@ -175,6 +210,18 @@ h1 { margin-top: 0; }
 .special-form input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; }
 .special-form h2 { grid-column: 1 / -1; margin: 0; }
 .special-row { background: #fbfbfa; }
+
+/* Events admin — same chassis as specials, slightly more columns. */
+.event-form {
+  grid-template-columns: 1.4fr 1.1fr 1.4fr 1.6fr auto auto auto;
+}
+.event-form .active-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--fg);
+}
 
 /* Theme picker */
 .theme-picker { display: flex; gap: 12px; flex-wrap: wrap; }

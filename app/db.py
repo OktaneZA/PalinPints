@@ -35,9 +35,14 @@ CREATE TABLE IF NOT EXISTS taps (
     abv REAL,
     ibu INTEGER,
     location TEXT,
+    price_third REAL,
     price_half REAL,
     price_pint REAL,
     price_takeaway REAL,
+    price_third_enabled INTEGER NOT NULL DEFAULT 0,
+    price_half_enabled INTEGER NOT NULL DEFAULT 0,
+    price_pint_enabled INTEGER NOT NULL DEFAULT 0,
+    price_takeaway_enabled INTEGER NOT NULL DEFAULT 0,
     color_override TEXT,
     image_override_path TEXT,
     untappd_slug TEXT
@@ -49,6 +54,16 @@ CREATE TABLE IF NOT EXISTS specials (
     title TEXT NOT NULL,
     description TEXT,
     price REAL
+);
+
+CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    name TEXT NOT NULL,
+    event_date TEXT,
+    location TEXT,
+    url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS untappd_cache (
@@ -97,6 +112,26 @@ def init_db() -> None:
         existing_cols = {c[1] for c in conn.execute("PRAGMA table_info(settings)").fetchall()}
         if "theme" not in existing_cols:
             conn.execute("ALTER TABLE settings ADD COLUMN theme TEXT NOT NULL DEFAULT 'marble'")
+
+        # Tap price flags + 1/3 pint, added when the price model became flexible.
+        tap_cols = {c[1] for c in conn.execute("PRAGMA table_info(taps)").fetchall()}
+        for col in ("price_third",):
+            if col not in tap_cols:
+                conn.execute(f"ALTER TABLE taps ADD COLUMN {col} REAL")
+        for col in (
+            "price_third_enabled",
+            "price_half_enabled",
+            "price_pint_enabled",
+            "price_takeaway_enabled",
+        ):
+            if col not in tap_cols:
+                conn.execute(f"ALTER TABLE taps ADD COLUMN {col} INTEGER NOT NULL DEFAULT 0")
+                # Seed flag from corresponding price column for existing rows.
+                price_col = col[: -len("_enabled")]
+                if price_col != "price_third":  # third pint is brand-new, never had a value
+                    conn.execute(
+                        f"UPDATE taps SET {col} = 1 WHERE {price_col} IS NOT NULL"
+                    )
 
         existing = conn.execute("SELECT id FROM settings WHERE id = 1").fetchone()
         if not existing:

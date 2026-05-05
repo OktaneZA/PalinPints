@@ -87,12 +87,14 @@ body[data-theme="neon"] .prices .size {
   text-transform: uppercase;
 }
 
-body[data-theme="neon"] .specials-panel {
+body[data-theme="neon"] .specials-panel,
+body[data-theme="neon"] .events-panel {
   background: rgba(15, 8, 22, 0.85);
   border: 2px solid #f870c1;
   box-shadow: 0 0 18px rgba(248, 112, 193, 0.4), inset 0 0 14px rgba(248, 112, 193, 0.15);
 }
-body[data-theme="neon"] .specials-panel h2 {
+body[data-theme="neon"] .specials-panel h2,
+body[data-theme="neon"] .events-panel h2 {
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 5px;
   color: #f870c1;
@@ -102,12 +104,12 @@ body[data-theme="neon"] .specials-panel h2 {
 body[data-theme="neon"] .specials-panel li {
   border-bottom: 1px solid rgba(248, 112, 193, 0.2);
 }
-body[data-theme="neon"] .s-title { font-weight: 700; font-size: 18px; color: #f0f0ff; }
-body[data-theme="neon"] .s-desc { color: #b8b8d8; font-size: 13px; }
+body[data-theme="neon"] .s-title { font-weight: 700; font-size: 22px; color: #f0f0ff; }
+body[data-theme="neon"] .s-desc { color: #b8b8d8; font-size: 16px; }
 body[data-theme="neon"] .s-price {
   color: #20e0d0;
   font-weight: 700;
-  font-size: 19px;
+  font-size: 23px;
   margin-top: 4px;
   text-shadow: 0 0 8px rgba(32, 224, 208, 0.5);
 }
