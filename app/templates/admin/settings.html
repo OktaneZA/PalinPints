@@ -1,0 +1,100 @@
+{% extends "admin/_base.html" %}
+{% block title %}Settings · PaliBeerView{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+
+<form method="post" enctype="multipart/form-data" class="settings-form">
+  <fieldset>
+    <legend>Home brewery</legend>
+    <label>Brewery name
+      <input type="text" name="home_brewery" value="{{ settings.home_brewery }}">
+    </label>
+    <label>Brewery logo
+      <input type="file" name="home_brewery_logo" accept="image/*">
+      {% if settings.home_brewery_logo_path %}
+        <div class="muted">current:
+          <img src="{{ url_for('serve_data_image', relpath=settings.home_brewery_logo_path) }}" class="thumb" alt="">
+        </div>
+      {% endif %}
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Theme</legend>
+    <div class="theme-picker">
+      <label class="theme-option">
+        <input type="radio" name="theme" value="marble" {% if settings.theme == 'marble' %}checked{% endif %}>
+        <span class="theme-card theme-card-marble">
+          <span class="theme-card-name">Marble</span>
+          <span class="theme-card-desc">Light marble, premium</span>
+        </span>
+      </label>
+      <label class="theme-option">
+        <input type="radio" name="theme" value="neon" {% if settings.theme == 'neon' %}checked{% endif %}>
+        <span class="theme-card theme-card-neon">
+          <span class="theme-card-name">Neon</span>
+          <span class="theme-card-desc">Dark with glow</span>
+        </span>
+      </label>
+      <label class="theme-option">
+        <input type="radio" name="theme" value="chalkboard" {% if settings.theme == 'chalkboard' %}checked{% endif %}>
+        <span class="theme-card theme-card-chalkboard">
+          <span class="theme-card-name">Chalkboard</span>
+          <span class="theme-card-desc">Rustic pub feel</span>
+        </span>
+      </label>
+      <label class="theme-option">
+        <input type="radio" name="theme" value="palindrome1" {% if settings.theme == 'palindrome1' %}checked{% endif %}>
+        <span class="theme-card theme-card-pali1">
+          <span class="theme-card-name">Palindrome 1</span>
+          <span class="theme-card-desc">Light brand</span>
+        </span>
+      </label>
+      <label class="theme-option">
+        <input type="radio" name="theme" value="palindrome2" {% if settings.theme == 'palindrome2' %}checked{% endif %}>
+        <span class="theme-card theme-card-pali2">
+          <span class="theme-card-name">Palindrome 2</span>
+          <span class="theme-card-desc">Dark brand</span>
+        </span>
+      </label>
+      <label class="theme-option">
+        <input type="radio" name="theme" value="palindrome3" {% if settings.theme == 'palindrome3' %}checked{% endif %}>
+        <span class="theme-card theme-card-pali3">
+          <span class="theme-card-name">Palindrome 3</span>
+          <span class="theme-card-desc">Green forward</span>
+        </span>
+      </label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Display</legend>
+    <label class="radio">
+      <input type="radio" name="display_style" value="logo" {% if settings.display_style == 'logo' %}checked{% endif %}>
+      Brewery logo next to each beer
+    </label>
+    <label class="radio">
+      <input type="radio" name="display_style" value="color" {% if settings.display_style == 'color' %}checked{% endif %}>
+      Beer color disc next to each beer
+    </label>
+    <label>Beers per page
+      <input type="number" name="beers_per_page" min="6" max="14" value="{{ settings.beers_per_page }}">
+    </label>
+    <label>Page rotation interval (seconds)
+      <input type="number" name="page_rotation_interval" min="5" max="120" value="{{ settings.page_rotation_interval }}">
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Default colors per style</legend>
+    <label>IPA & Pale Ales       <input type="color" name="color_ipa"       value="{{ settings.color_ipa }}"></label>
+    <label>Sour & Wild Ales      <input type="color" name="color_sour"      value="{{ settings.color_sour }}"></label>
+    <label>Stout & Porter        <input type="color" name="color_stout"     value="{{ settings.color_stout }}"></label>
+    <label>Lager & Pilsner       <input type="color" name="color_lager"     value="{{ settings.color_lager }}"></label>
+    <label>Belgian & Farmhouse   <input type="color" name="color_belgian"   value="{{ settings.color_belgian }}"></label>
+    <label>Historical & Specialty<input type="color" name="color_specialty" value="{{ settings.color_specialty }}"></label>
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Save settings</button>
+</form>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "admin/_base.html" %}
+{% block title %}Specials · PaliBeerView{% endblock %}
+{% block content %}
+<h1>Specials</h1>
+<p class="hint">Specials show in the bottom-right of the TV display and don't rotate with the tap pages.</p>
+
+<form method="post" class="special-form">
+  <h2>Add special</h2>
+  <label>Title <input type="text" name="title" required placeholder="e.g. IPA Flight"></label>
+  <label>Description <input type="text" name="description" placeholder="e.g. 4 × 1/3 pint"></label>
+  <label>Price (£) <input type="number" step="0.05" name="price"></label>
+  <button type="submit" class="btn btn-primary">Add</button>
+</form>
+
+<h2>Current specials</h2>
+{% if not specials %}
+  <p class="muted">No specials yet.</p>
+{% endif %}
+{% for s in specials %}
+<form method="post" action="{{ url_for('admin.update_special_route', special_id=s.id) }}" class="special-form special-row">
+  <label>Title <input type="text" name="title" value="{{ s.title }}" required></label>
+  <label>Description <input type="text" name="description" value="{{ s.description or '' }}"></label>
+  <label>Price (£) <input type="number" step="0.05" name="price" value="{{ s.price if s.price is not none else '' }}"></label>
+  <button type="submit" class="btn btn-secondary">Update</button>
+  <button type="submit" class="btn btn-danger" formaction="{{ url_for('admin.delete_special_route', special_id=s.id) }}" onclick="return confirm('Delete this special?');">Delete</button>
+</form>
+{% endfor %}
+{% endblock %}

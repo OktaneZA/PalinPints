@@ -1,0 +1,106 @@
+/* Structural baseline — themes override colors, fonts, decorations.
+   Designed for 1920x1080 horizontal. */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  width: 100vw; height: 100vh;
+  overflow: hidden;
+}
+
+.display-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 48px 8px;
+}
+.display-header h1 { margin: 0; }
+.brand-logo { height: 72px; }
+
+.display-body {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  padding: 8px 48px 24px;
+  height: calc(100vh - 130px);
+}
+
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.beer-row {
+  display: grid;
+  grid-template-columns: 84px 64px 1fr 280px;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 0;
+}
+.beer-row.is-hidden { display: none; }
+
+.cat-tag {
+  text-align: right;
+  line-height: 1.1;
+  padding-right: 4px;
+}
+
+.logo-slot {
+  width: 56px; height: 56px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+}
+.logo-slot img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain;
+}
+.logo-slot.color-disc { border-radius: 50%; }
+
+.beer-main { min-width: 0; }
+.line-1 {
+  display: flex; align-items: baseline; gap: 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tap-num { display: inline-block; min-width: 32px; }
+.line-2 { display: flex; gap: 18px; margin-top: 2px; }
+.line-2 span { white-space: nowrap; }
+
+.prices {
+  display: flex; gap: 18px;
+  justify-content: flex-end;
+  align-items: center;
+}
+.prices > div {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 64px;
+}
+
+.specials-panel {
+  border-radius: 12px;
+  padding: 20px 22px;
+  align-self: end;
+  max-height: 100%;
+  overflow: hidden;
+}
+.specials-panel h2 { margin: 0 0 12px; }
+.specials-panel ul { list-style: none; margin: 0; padding: 0; }
+.specials-panel li { padding: 10px 0; }
+.specials-panel li:last-child { border-bottom: none !important; }
+
+.display-footer {
+  position: fixed;
+  bottom: 12px;
+  right: 24px;
+  letter-spacing: 2px;
+}
+
+.empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100%;
+}
+.empty img { height: 220px; }

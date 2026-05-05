@@ -1,0 +1,88 @@
+{% extends "admin/_base.html" %}
+{% block title %}Taps · PaliBeerView{% endblock %}
+{% block content %}
+<h1>Taps</h1>
+<p class="hint">Home brewery: <strong>{{ settings.home_brewery }}</strong> — pre-fills the brewery on new taps.</p>
+
+{% for tap in taps %}
+<section class="tap-card {% if tap.active %}is-active{% endif %}">
+  <form method="post" action="{{ url_for('admin.save_tap', tap_number=tap.tap_number) }}" enctype="multipart/form-data" data-tap-form>
+    <header class="tap-card-header">
+      <span class="tap-num">#{{ tap.tap_number }}</span>
+      <label class="active-toggle">
+        <input type="checkbox" name="active" value="1" {% if tap.active %}checked{% endif %}>
+        Active
+      </label>
+      <button type="button" class="btn btn-secondary" data-untappd-search>Search Untappd</button>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </header>
+
+    <div class="tap-grid">
+      <label>Brewery
+        <input type="text" name="brewery" value="{{ tap.brewery or settings.home_brewery }}" data-field="brewery">
+      </label>
+      <label>Beer name
+        <input type="text" name="beer_name" value="{{ tap.beer_name or '' }}" data-field="beer_name">
+      </label>
+      <label>Style category
+        <select name="style_category" data-field="style_category">
+          <option value="">—</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}" {% if tap.style_category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Sub-style
+        <input type="text" name="sub_style" value="{{ tap.sub_style or '' }}" placeholder="e.g. American IPA" data-field="sub_style">
+      </label>
+      <label>ABV %
+        <input type="number" step="0.1" name="abv" value="{{ tap.abv if tap.abv is not none else '' }}" data-field="abv">
+      </label>
+      <label>IBU
+        <input type="number" step="1" name="ibu" value="{{ tap.ibu if tap.ibu is not none else '' }}" data-field="ibu">
+      </label>
+      <label>Location
+        <input type="text" name="location" value="{{ tap.location or '' }}" placeholder="e.g. Milwaukee, WI" data-field="location">
+      </label>
+      <label>½ pint £
+        <input type="number" step="0.05" name="price_half" value="{{ tap.price_half if tap.price_half is not none else '' }}">
+      </label>
+      <label>Pint £
+        <input type="number" step="0.05" name="price_pint" value="{{ tap.price_pint if tap.price_pint is not none else '' }}">
+      </label>
+      <label>Takeaway £
+        <input type="number" step="0.05" name="price_takeaway" value="{{ tap.price_takeaway if tap.price_takeaway is not none else '' }}">
+      </label>
+
+      <label class="color-override">
+        <input type="checkbox" name="use_color_override" value="1" {% if tap.color_override %}checked{% endif %}>
+        Override color
+        <input type="color" name="color_override" value="{{ tap.color_override or '#888888' }}">
+      </label>
+
+      <label>Image override
+        <input type="file" name="image" accept="image/*">
+        {% if tap.image_override_path %}
+          <span class="muted">current:
+            <img src="{{ url_for('serve_data_image', relpath=tap.image_override_path) }}" class="thumb" alt="">
+            <label class="inline"><input type="checkbox" name="clear_image" value="1"> remove</label>
+          </span>
+        {% endif %}
+      </label>
+
+      <input type="hidden" name="untappd_slug" value="{{ tap.untappd_slug or '' }}" data-field="untappd_slug">
+    </div>
+
+    <div class="tap-card-footer">
+      <span class="untappd-status" data-untappd-status></span>
+    </div>
+  </form>
+
+  {% if tap.active or tap.beer_name %}
+  <form method="post" action="{{ url_for('admin.clear', tap_number=tap.tap_number) }}" class="clear-form" onsubmit="return confirm('Clear tap #{{ tap.tap_number }}?');">
+    <button type="submit" class="btn btn-danger">Clear tap</button>
+  </form>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,117 @@
+/* Palindrome 3 — green-forward immersive brand.
+   Palette: #93BB48 (bg accent), #688531 (deep), #E9F1DA (surface), #080808 (text/contrast). */
+body[data-theme="palindrome3"] {
+  font-family: 'Inter', system-ui, sans-serif;
+  background:
+    linear-gradient(160deg, #93BB48 0%, #688531 100%);
+  color: #E9F1DA;
+  position: relative;
+}
+body[data-theme="palindrome3"]::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, transparent 0 40px, rgba(8,8,8,0.04) 40px 41px);
+  pointer-events: none;
+}
+
+body[data-theme="palindrome3"] .display-header {
+  background: #080808;
+  margin: 0; padding: 22px 48px 18px;
+  border-bottom: 4px solid #93BB48;
+}
+body[data-theme="palindrome3"] .display-header h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 72px;
+  letter-spacing: 8px;
+  color: #93BB48;
+}
+body[data-theme="palindrome3"] .brand-logo {
+  filter: invert(1) brightness(1.1);
+  opacity: 0.95;
+}
+
+body[data-theme="palindrome3"] .display-body { padding-top: 18px; }
+
+body[data-theme="palindrome3"] .beer-row {
+  background: rgba(8, 8, 8, 0.35);
+  border: 1px solid rgba(233, 241, 218, 0.12);
+  border-radius: 8px;
+  padding: 10px 18px;
+  margin-bottom: 4px;
+}
+body[data-theme="palindrome3"] .cat-tag {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  color: #E9F1DA;
+  text-transform: uppercase;
+  border-right: 2px solid rgba(233, 241, 218, 0.4);
+}
+body[data-theme="palindrome3"] .logo-slot {
+  background: #E9F1DA;
+  border: 1px solid rgba(8, 8, 8, 0.2);
+}
+body[data-theme="palindrome3"] .logo-slot.color-disc {
+  background: transparent !important;
+  border: 4px solid #E9F1DA;
+}
+
+body[data-theme="palindrome3"] .line-1 {
+  font-size: 26px; font-weight: 700;
+}
+body[data-theme="palindrome3"] .tap-num {
+  color: #93BB48;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+}
+body[data-theme="palindrome3"] .brewery { color: #c8d4b6; font-weight: 500; }
+body[data-theme="palindrome3"] .beer-name { color: #E9F1DA; }
+
+body[data-theme="palindrome3"] .line-2 {
+  font-size: 15px;
+  color: #a8b89a;
+}
+body[data-theme="palindrome3"] .prices .price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #93BB48;
+}
+body[data-theme="palindrome3"] .prices .size {
+  font-size: 11px;
+  color: #c8d4b6;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+body[data-theme="palindrome3"] .specials-panel {
+  background: #080808;
+  border: 2px solid #93BB48;
+  box-shadow: 0 8px 22px rgba(8, 8, 8, 0.4);
+}
+body[data-theme="palindrome3"] .specials-panel h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 5px;
+  color: #93BB48;
+  font-size: 28px;
+}
+body[data-theme="palindrome3"] .specials-panel li {
+  border-bottom: 1px solid rgba(147, 187, 72, 0.25);
+}
+body[data-theme="palindrome3"] .s-title { font-weight: 700; font-size: 18px; color: #E9F1DA; }
+body[data-theme="palindrome3"] .s-desc { color: #a8b89a; font-size: 13px; }
+body[data-theme="palindrome3"] .s-price {
+  color: #93BB48;
+  font-weight: 700;
+  font-size: 20px;
+  margin-top: 4px;
+}
+
+body[data-theme="palindrome3"] .display-footer { font-size: 12px; color: #E9F1DA; }
+body[data-theme="palindrome3"] .empty { color: #E9F1DA; }
+body[data-theme="palindrome3"] .empty img { filter: invert(1); }
+body[data-theme="palindrome3"] .empty p {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px; letter-spacing: 6px;
+  color: #E9F1DA;
+}

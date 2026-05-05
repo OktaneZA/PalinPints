@@ -1,0 +1,157 @@
+/* Chalkboard theme — slate background with chalk-style text. */
+body[data-theme="chalkboard"] {
+  font-family: 'Special Elite', 'Courier New', monospace;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(255,255,255,0.03) 0%, transparent 60%),
+    linear-gradient(135deg, #2a3035 0%, #1f262b 100%);
+  color: #f3efe6;
+  position: relative;
+}
+body[data-theme="chalkboard"]::before {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,255,255,0.012) 2px 3px),
+    repeating-linear-gradient(90deg, transparent 0 2px, rgba(255,255,255,0.012) 2px 3px);
+  pointer-events: none;
+}
+body[data-theme="chalkboard"]::after {
+  content: "";
+  position: fixed;
+  inset: 24px;
+  border: 4px double rgba(243, 239, 230, 0.25);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+}
+body[data-theme="chalkboard"] > * { position: relative; z-index: 2; }
+
+body[data-theme="chalkboard"] .display-header {
+  padding: 32px 64px 12px;
+}
+body[data-theme="chalkboard"] .display-header h1 {
+  font-family: 'Caveat', cursive;
+  font-size: 86px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #f3efe6;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  transform: rotate(-1deg);
+}
+body[data-theme="chalkboard"] .brand-logo {
+  filter: invert(1) brightness(1.1);
+  opacity: 0.85;
+}
+
+body[data-theme="chalkboard"] .display-body { padding: 8px 64px 32px; }
+
+body[data-theme="chalkboard"] .beer-row {
+  border-bottom: 1px dashed rgba(243, 239, 230, 0.18);
+  padding: 12px 0;
+}
+body[data-theme="chalkboard"] .cat-tag {
+  font-family: 'Caveat', cursive;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #f0a85a;
+  text-transform: none;
+  border-right: 1px dashed rgba(240, 168, 90, 0.35);
+}
+body[data-theme="chalkboard"] .logo-slot {
+  background: rgba(255,255,255,0.95);
+  border: 2px solid rgba(243, 239, 230, 0.4);
+}
+body[data-theme="chalkboard"] .logo-slot.color-disc {
+  background: transparent !important;
+  border: 3px dashed rgba(243, 239, 230, 0.6);
+}
+
+body[data-theme="chalkboard"] .line-1 {
+  font-size: 24px;
+  font-weight: 400;
+}
+body[data-theme="chalkboard"] .tap-num {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 32px;
+  color: #f0a85a;
+  min-width: 40px;
+}
+body[data-theme="chalkboard"] .brewery {
+  color: #c8c0b0; font-weight: 400;
+  font-family: 'Special Elite', monospace;
+  font-size: 18px;
+}
+body[data-theme="chalkboard"] .beer-name {
+  color: #f3efe6;
+  font-family: 'Caveat', cursive;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+body[data-theme="chalkboard"] .line-2 {
+  font-size: 14px;
+  color: #b8b0a0;
+  font-family: 'Special Elite', monospace;
+}
+body[data-theme="chalkboard"] .prices .price {
+  font-family: 'Caveat', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  color: #f0a85a;
+}
+body[data-theme="chalkboard"] .prices .size {
+  font-size: 11px;
+  color: #b8b0a0;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: 'Special Elite', monospace;
+}
+
+body[data-theme="chalkboard"] .specials-panel {
+  background: rgba(0,0,0,0.35);
+  border: 2px dashed #f0a85a;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.2);
+}
+body[data-theme="chalkboard"] .specials-panel h2 {
+  font-family: 'Caveat', cursive;
+  letter-spacing: 1px;
+  color: #f0a85a;
+  font-size: 38px;
+  font-weight: 700;
+  text-align: center;
+  transform: rotate(-1deg);
+}
+body[data-theme="chalkboard"] .specials-panel li {
+  border-bottom: 1px dashed rgba(243, 239, 230, 0.18);
+}
+body[data-theme="chalkboard"] .s-title {
+  font-family: 'Caveat', cursive;
+  font-weight: 700; font-size: 22px;
+  color: #f3efe6;
+}
+body[data-theme="chalkboard"] .s-desc {
+  font-family: 'Special Elite', monospace;
+  font-size: 13px; color: #c8c0b0;
+}
+body[data-theme="chalkboard"] .s-price {
+  color: #f0a85a;
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 24px;
+  margin-top: 4px;
+}
+
+body[data-theme="chalkboard"] .display-footer {
+  font-family: 'Caveat', cursive;
+  font-size: 18px; color: #c8c0b0;
+  letter-spacing: 1px;
+}
+body[data-theme="chalkboard"] .empty { color: #b8b0a0; }
+body[data-theme="chalkboard"] .empty img { filter: invert(1); }
+body[data-theme="chalkboard"] .empty p {
+  font-family: 'Caveat', cursive;
+  font-size: 56px; letter-spacing: 2px;
+}

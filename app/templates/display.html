@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1920, initial-scale=1">
+  <title>Draft List</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;700&family=Playfair+Display:wght@700;900&family=Caveat:wght@500;700&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/display.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + settings.theme + '.css') }}">
+</head>
+<body data-version="{{ version_hash }}"
+      data-style="{{ settings.display_style }}"
+      data-theme="{{ settings.theme }}"
+      data-beers-per-page="{{ settings.beers_per_page }}"
+      data-rotation-interval="{{ settings.page_rotation_interval }}">
+
+  <header class="display-header">
+    <h1>DRAFT LIST</h1>
+    <img class="brand-logo" src="{{ url_for('static', filename='img/palindrome-logo.png') }}" onerror="this.style.display='none'" alt="">
+  </header>
+
+  <main class="display-body">
+    <div class="categories" id="categories">
+      {% if not grouped %}
+        <div class="empty">
+          <img src="{{ url_for('static', filename='img/palindrome-logo.png') }}" onerror="this.style.display='none'" alt="">
+          <p>Coming soon</p>
+        </div>
+      {% endif %}
+      {% for cat, beers in grouped %}
+        {% for tap in beers %}
+          <article class="beer-row" data-category="{{ cat }}">
+            <div class="cat-tag">{{ cat }}</div>
+            {% if settings.display_style == 'color' %}
+              <div class="logo-slot color-disc" style="background: {{ tap.display_color }};"></div>
+            {% else %}
+              <div class="logo-slot"><img src="{{ tap.logo_url }}" alt="" onerror="this.src='{{ url_for('static', filename='img/hop-fallback.svg') }}'"></div>
+            {% endif %}
+            <div class="beer-main">
+              <div class="line-1">
+                <span class="tap-num">{{ tap.tap_number }}</span>
+                <span class="brewery">{{ tap.brewery }}</span>
+                <span class="beer-name">{{ tap.beer_name }}</span>
+              </div>
+              <div class="line-2">
+                {% if tap.sub_style %}<span>{{ tap.sub_style }}</span>{% endif %}
+                {% if tap.abv is not none %}<span>{{ tap.abv }}% ABV</span>{% endif %}
+                {% if tap.ibu is not none %}<span>{{ tap.ibu }} IBU</span>{% endif %}
+                {% if tap.location %}<span>{{ tap.location }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="prices">
+              {% if tap.price_half is not none %}<div><span class="price">£{{ '%.2f' % tap.price_half }}</span><span class="size">½</span></div>{% endif %}
+              {% if tap.price_pint is not none %}<div><span class="price">£{{ '%.2f' % tap.price_pint }}</span><span class="size">pint</span></div>{% endif %}
+              {% if tap.price_takeaway is not none %}<div><span class="price">£{{ '%.2f' % tap.price_takeaway }}</span><span class="size">takeaway</span></div>{% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      {% endfor %}
+    </div>
+
+    {% if specials %}
+    <aside class="specials-panel">
+      <h2>SPECIALS</h2>
+      <ul>
+        {% for s in specials %}
+          <li>
+            <div class="s-title">{{ s.title }}</div>
+            {% if s.description %}<div class="s-desc">{{ s.description }}</div>{% endif %}
+            {% if s.price is not none %}<div class="s-price">£{{ '%.2f' % s.price }}</div>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </aside>
+    {% endif %}
+  </main>
+
+  <footer class="display-footer">
+    <span class="page-indicator" id="pageIndicator"></span>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/display.js') }}"></script>
+</body>
+</html>

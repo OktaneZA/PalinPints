@@ -1,0 +1,123 @@
+/* Neon theme — vivid pink/cyan on black. */
+body[data-theme="neon"] {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0a0a0e;
+  color: #f0f0ff;
+  position: relative;
+}
+body[data-theme="neon"]::before {
+  content: "";
+  position: fixed;
+  top: 16px; left: 16px; right: 16px; bottom: 16px;
+  border-radius: 16px;
+  padding: 3px;
+  background: linear-gradient(135deg, #f870c1 0%, #c020a0 25%, #6020c0 50%, #20a0e0 75%, #20e0d0 100%);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+body[data-theme="neon"] > * { position: relative; z-index: 2; }
+
+body[data-theme="neon"] .display-header h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 72px;
+  letter-spacing: 8px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(248, 112, 193, 0.6), 0 0 24px rgba(248, 112, 193, 0.3);
+}
+body[data-theme="neon"] .brand-logo {
+  filter: invert(1) brightness(1.1);
+  opacity: 0.9;
+}
+
+body[data-theme="neon"] .beer-row {
+  border-bottom: 1px solid rgba(248, 112, 193, 0.15);
+}
+body[data-theme="neon"] .cat-tag {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1.8px;
+  color: #20e0d0;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(32, 224, 208, 0.4);
+  border-right: 2px solid rgba(32, 224, 208, 0.3);
+}
+body[data-theme="neon"] .logo-slot {
+  background: #ffffff;
+  box-shadow: 0 0 12px rgba(248, 112, 193, 0.25);
+}
+body[data-theme="neon"] .logo-slot.color-disc {
+  background: transparent !important;
+  border: 4px solid rgba(255,255,255,0.85);
+  box-shadow: 0 0 14px currentColor, inset 0 0 8px rgba(0,0,0,0.3);
+}
+
+body[data-theme="neon"] .line-1 {
+  font-size: 26px; font-weight: 700;
+}
+body[data-theme="neon"] .tap-num {
+  color: #20e0d0;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  text-shadow: 0 0 8px rgba(32, 224, 208, 0.6);
+}
+body[data-theme="neon"] .brewery { color: #b8b8d8; font-weight: 500; }
+body[data-theme="neon"] .beer-name {
+  color: #f870c1;
+  text-shadow: 0 0 10px rgba(248, 112, 193, 0.5);
+}
+
+body[data-theme="neon"] .line-2 {
+  font-size: 15px;
+  color: #9090b0;
+}
+body[data-theme="neon"] .prices .price {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+}
+body[data-theme="neon"] .prices .size {
+  font-size: 11px;
+  color: #20e0d0;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+body[data-theme="neon"] .specials-panel {
+  background: rgba(15, 8, 22, 0.85);
+  border: 2px solid #f870c1;
+  box-shadow: 0 0 18px rgba(248, 112, 193, 0.4), inset 0 0 14px rgba(248, 112, 193, 0.15);
+}
+body[data-theme="neon"] .specials-panel h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 5px;
+  color: #f870c1;
+  font-size: 28px;
+  text-shadow: 0 0 12px rgba(248, 112, 193, 0.7);
+}
+body[data-theme="neon"] .specials-panel li {
+  border-bottom: 1px solid rgba(248, 112, 193, 0.2);
+}
+body[data-theme="neon"] .s-title { font-weight: 700; font-size: 18px; color: #f0f0ff; }
+body[data-theme="neon"] .s-desc { color: #b8b8d8; font-size: 13px; }
+body[data-theme="neon"] .s-price {
+  color: #20e0d0;
+  font-weight: 700;
+  font-size: 19px;
+  margin-top: 4px;
+  text-shadow: 0 0 8px rgba(32, 224, 208, 0.5);
+}
+
+body[data-theme="neon"] .display-footer { font-size: 12px; color: #20e0d0; }
+body[data-theme="neon"] .empty { color: #b8b8d8; }
+body[data-theme="neon"] .empty img { filter: invert(1); }
+body[data-theme="neon"] .empty p {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px; letter-spacing: 6px;
+  color: #f870c1;
+  text-shadow: 0 0 20px rgba(248, 112, 193, 0.6);
+}

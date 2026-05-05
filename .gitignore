@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+data/palibeerview.db
+data/palibeerview.db-journal
+data/.secret_key
+data/images/breweries/*
+data/images/uploads/*
+!data/images/breweries/.gitkeep
+!data/images/uploads/.gitkeep
+.idea/
+.vscode/
+.claude/
+*.log
