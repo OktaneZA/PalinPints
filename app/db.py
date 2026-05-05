@@ -15,6 +15,15 @@ CREATE TABLE IF NOT EXISTS settings (
     home_brewery_logo_path TEXT,
     display_style TEXT NOT NULL DEFAULT 'logo',
     theme TEXT NOT NULL DEFAULT 'marble',
+    day_theme TEXT NOT NULL DEFAULT 'marble',
+    night_theme TEXT NOT NULL DEFAULT 'neon',
+    latitude REAL,
+    longitude REAL,
+    override_day_start TEXT,
+    override_night_start TEXT,
+    cached_sunrise TEXT,
+    cached_sunset TEXT,
+    cache_fetched_at TEXT,
     beers_per_page INTEGER NOT NULL DEFAULT 12,
     page_rotation_interval INTEGER NOT NULL DEFAULT 15,
     color_ipa TEXT NOT NULL,
@@ -113,6 +122,26 @@ def init_db() -> None:
         existing_cols = {c[1] for c in conn.execute("PRAGMA table_info(settings)").fetchall()}
         if "theme" not in existing_cols:
             conn.execute("ALTER TABLE settings ADD COLUMN theme TEXT NOT NULL DEFAULT 'marble'")
+
+        # Day/night theme switch + sunset cache columns.
+        sunset_cols = {
+            "day_theme": "TEXT NOT NULL DEFAULT 'marble'",
+            "night_theme": "TEXT NOT NULL DEFAULT 'neon'",
+            "latitude": "REAL",
+            "longitude": "REAL",
+            "override_day_start": "TEXT",
+            "override_night_start": "TEXT",
+            "cached_sunrise": "TEXT",
+            "cached_sunset": "TEXT",
+            "cache_fetched_at": "TEXT",
+        }
+        for col, decl in sunset_cols.items():
+            if col not in existing_cols:
+                conn.execute(f"ALTER TABLE settings ADD COLUMN {col} {decl}")
+        # Seed day_theme from the existing single theme value if we just
+        # added it — preserves the user's current look as the daytime default.
+        if "day_theme" not in existing_cols and "theme" in existing_cols:
+            conn.execute("UPDATE settings SET day_theme = theme WHERE id = 1")
 
         # Specials gained an active flag when events landed.
         special_cols = {c[1] for c in conn.execute("PRAGMA table_info(specials)").fetchall()}

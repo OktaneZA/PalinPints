@@ -1,10 +1,11 @@
 """Admin web UI routes."""
 from __future__ import annotations
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 
 from . import STYLE_CATEGORIES, STYLE_SUBSTYLES
 from .images import save_upload
+from .sun import auto_detect_location
 from .models import (
     EVENT_LIMIT,
     add_event,
@@ -132,18 +133,54 @@ def clear(tap_number: int):
     return redirect(url_for("admin.taps"))
 
 
+_ALLOWED_THEMES = {"marble", "neon", "chalkboard", "palindrome1", "palindrome2", "palindrome3"}
+
+
+def _normalise_theme(value: str | None, fallback: str = "marble") -> str:
+    return value if value in _ALLOWED_THEMES else fallback
+
+
+def _normalise_hhmm(value: str | None) -> str | None:
+    """Accept HH:MM or HH:MM:SS, normalise to HH:MM. None for blank/invalid."""
+    if not value:
+        return None
+    parts = value.strip().split(":")
+    if len(parts) < 2:
+        return None
+    try:
+        h, m = int(parts[0]), int(parts[1])
+    except ValueError:
+        return None
+    if not (0 <= h < 24 and 0 <= m < 60):
+        return None
+    return f"{h:02d}:{m:02d}"
+
+
 @bp.route("/settings", methods=["GET", "POST"])
 def settings():
     if request.method == "POST":
         f = request.form
-        theme = f.get("theme") or "marble"
-        allowed_themes = {"marble", "neon", "chalkboard", "palindrome1", "palindrome2", "palindrome3"}
-        if theme not in allowed_themes:
-            theme = "marble"
+        day_theme = _normalise_theme(f.get("day_theme"))
+        night_theme = _normalise_theme(f.get("night_theme"), fallback="neon")
+
+        lat = _to_float(f.get("latitude"))
+        lon = _to_float(f.get("longitude"))
+        latitude = lat if lat is not None and -90 <= lat <= 90 else None
+        longitude = lon if lon is not None and -180 <= lon <= 180 else None
+
+        existing = get_settings()
         values = {
             "home_brewery": f.get("home_brewery") or "Palindrome Brewing Co",
             "display_style": "color" if f.get("display_style") == "color" else "logo",
-            "theme": theme,
+            "day_theme": day_theme,
+            "night_theme": night_theme,
+            # Keep the legacy `theme` column in sync with the day theme so any
+            # consumer still reading it (or a stale state cache) stays valid.
+            "theme": day_theme,
+            "latitude": latitude,
+            "longitude": longitude,
+            "override_day_start": _normalise_hhmm(f.get("override_day_start")),
+            "override_night_start": _normalise_hhmm(f.get("override_night_start")),
             "beers_per_page": max(6, min(14, _to_int(f.get("beers_per_page")) or 12)),
             "page_rotation_interval": max(5, min(120, _to_int(f.get("page_rotation_interval")) or 15)),
             "color_ipa": f.get("color_ipa"),
@@ -153,6 +190,11 @@ def settings():
             "color_belgian": f.get("color_belgian"),
             "color_specialty": f.get("color_specialty"),
         }
+        # Force a fresh sunset lookup on the next state poll if the user
+        # changed the coordinates. Saves them having to wait a week.
+        if (existing.get("latitude") != latitude
+                or existing.get("longitude") != longitude):
+            values["cache_fetched_at"] = None
         if "home_brewery_logo" in request.files:
             uploaded = save_upload(request.files["home_brewery_logo"])
             if uploaded:
@@ -162,6 +204,15 @@ def settings():
         return redirect(url_for("admin.settings"))
 
     return render_template("admin/settings.html", settings=get_settings(), categories=STYLE_CATEGORIES)
+
+
+@bp.route("/api/geolocate", methods=["GET"])
+def geolocate():
+    """Best-effort IP-based lat/lon for the auto-detect button."""
+    coords = auto_detect_location()
+    if coords is None:
+        return jsonify({"error": "lookup failed"}), 502
+    return jsonify({"latitude": coords[0], "longitude": coords[1]})
 
 
 @bp.route("/specials", methods=["GET", "POST"])

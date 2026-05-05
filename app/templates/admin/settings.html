@@ -19,52 +19,90 @@
     </label>
   </fieldset>
 
+  {% set theme_choices = [
+    ('marble',      'Marble',       'Light marble, premium', 'theme-card-marble'),
+    ('neon',        'Neon',         'Dark with glow',        'theme-card-neon'),
+    ('chalkboard',  'Chalkboard',   'Rustic pub feel',       'theme-card-chalkboard'),
+    ('palindrome1', 'Palindrome 1', 'Light brand',           'theme-card-pali1'),
+    ('palindrome2', 'Palindrome 2', 'Dark brand',            'theme-card-pali2'),
+    ('palindrome3', 'Palindrome 3', 'Green forward',         'theme-card-pali3'),
+  ] %}
+
   <fieldset>
-    <legend>Theme</legend>
+    <legend>Day theme</legend>
+    <p class="hint">Active during daylight hours.</p>
     <div class="theme-picker">
+      {% for value, name, desc, css in theme_choices %}
       <label class="theme-option">
-        <input type="radio" name="theme" value="marble" {% if settings.theme == 'marble' %}checked{% endif %}>
-        <span class="theme-card theme-card-marble">
-          <span class="theme-card-name">Marble</span>
-          <span class="theme-card-desc">Light marble, premium</span>
+        <input type="radio" name="day_theme" value="{{ value }}" {% if settings.day_theme == value %}checked{% endif %}>
+        <span class="theme-card {{ css }}">
+          <span class="theme-card-name">{{ name }}</span>
+          <span class="theme-card-desc">{{ desc }}</span>
         </span>
       </label>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Night theme</legend>
+    <p class="hint">Used from 30 min before sunset until sunrise (or override times below).</p>
+    <div class="theme-picker">
+      {% for value, name, desc, css in theme_choices %}
       <label class="theme-option">
-        <input type="radio" name="theme" value="neon" {% if settings.theme == 'neon' %}checked{% endif %}>
-        <span class="theme-card theme-card-neon">
-          <span class="theme-card-name">Neon</span>
-          <span class="theme-card-desc">Dark with glow</span>
+        <input type="radio" name="night_theme" value="{{ value }}" {% if settings.night_theme == value %}checked{% endif %}>
+        <span class="theme-card {{ css }}">
+          <span class="theme-card-name">{{ name }}</span>
+          <span class="theme-card-desc">{{ desc }}</span>
         </span>
       </label>
-      <label class="theme-option">
-        <input type="radio" name="theme" value="chalkboard" {% if settings.theme == 'chalkboard' %}checked{% endif %}>
-        <span class="theme-card theme-card-chalkboard">
-          <span class="theme-card-name">Chalkboard</span>
-          <span class="theme-card-desc">Rustic pub feel</span>
-        </span>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Day / night switch</legend>
+    <p class="hint">
+      Sunset/sunrise are looked up once a week from the public
+      sunrise-sunset.org API, using the latitude/longitude below.
+      Either transition can be overridden manually with a 24-hour clock time.
+    </p>
+    <div class="row-pair">
+      <label>Latitude
+        <input type="number" step="0.0001" name="latitude"
+               value="{{ settings.latitude if settings.latitude is not none else '' }}"
+               placeholder="e.g. 51.2787">
       </label>
-      <label class="theme-option">
-        <input type="radio" name="theme" value="palindrome1" {% if settings.theme == 'palindrome1' %}checked{% endif %}>
-        <span class="theme-card theme-card-pali1">
-          <span class="theme-card-name">Palindrome 1</span>
-          <span class="theme-card-desc">Light brand</span>
-        </span>
+      <label>Longitude
+        <input type="number" step="0.0001" name="longitude"
+               value="{{ settings.longitude if settings.longitude is not none else '' }}"
+               placeholder="e.g. 0.8895">
       </label>
-      <label class="theme-option">
-        <input type="radio" name="theme" value="palindrome2" {% if settings.theme == 'palindrome2' %}checked{% endif %}>
-        <span class="theme-card theme-card-pali2">
-          <span class="theme-card-name">Palindrome 2</span>
-          <span class="theme-card-desc">Dark brand</span>
-        </span>
+      <button type="button" class="btn btn-secondary" id="autoLocate">Auto-detect from IP</button>
+    </div>
+    <div class="row-pair">
+      <label>Day-start override (HH:MM, optional)
+        <input type="time" name="override_day_start" value="{{ settings.override_day_start or '' }}">
       </label>
-      <label class="theme-option">
-        <input type="radio" name="theme" value="palindrome3" {% if settings.theme == 'palindrome3' %}checked{% endif %}>
-        <span class="theme-card theme-card-pali3">
-          <span class="theme-card-name">Palindrome 3</span>
-          <span class="theme-card-desc">Green forward</span>
-        </span>
+      <label>Night-start override (HH:MM, optional)
+        <input type="time" name="override_night_start" value="{{ settings.override_night_start or '' }}">
       </label>
     </div>
+    <p class="muted">
+      {% if settings.cached_sunrise and settings.cached_sunset %}
+        Cached sunrise: <strong>{{ settings.cached_sunrise[:5] }}</strong> ·
+        Cached sunset: <strong>{{ settings.cached_sunset[:5] }}</strong>
+        {% if settings.cache_fetched_at %}
+          (fetched {{ settings.cache_fetched_at[:10] }})
+        {% endif %}
+      {% else %}
+        No sunrise/sunset cached yet.
+        {% if settings.latitude is none or settings.longitude is none %}
+          Set a latitude and longitude (or use auto-detect) and save —
+          the lookup happens automatically on the next display refresh.
+        {% endif %}
+      {% endif %}
+    </p>
   </fieldset>
 
   <fieldset>
@@ -97,4 +135,27 @@
 
   <button type="submit" class="btn btn-primary">Save settings</button>
 </form>
+
+<script>
+  document.getElementById('autoLocate')?.addEventListener('click', async (ev) => {
+    const btn = ev.currentTarget;
+    btn.disabled = true;
+    const orig = btn.textContent;
+    btn.textContent = 'Looking up…';
+    try {
+      const r = await fetch('/admin/api/geolocate');
+      if (!r.ok) throw new Error('lookup failed');
+      const data = await r.json();
+      const latInput = document.querySelector('input[name="latitude"]');
+      const lonInput = document.querySelector('input[name="longitude"]');
+      if (latInput) latInput.value = (Math.round(data.latitude * 10000) / 10000).toString();
+      if (lonInput) lonInput.value = (Math.round(data.longitude * 10000) / 10000).toString();
+      btn.textContent = 'Detected — remember to Save';
+    } catch (e) {
+      btn.textContent = 'Lookup failed';
+    } finally {
+      setTimeout(() => { btn.disabled = false; btn.textContent = orig; }, 2500);
+    }
+  });
+</script>
 {% endblock %}

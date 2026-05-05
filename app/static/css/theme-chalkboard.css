@@ -64,7 +64,6 @@ body[data-theme="chalkboard"] .logo-slot {
   border: 2px solid rgba(243, 239, 230, 0.4);
 }
 body[data-theme="chalkboard"] .logo-slot.color-disc {
-  background: transparent !important;
   border: 3px dashed rgba(243, 239, 230, 0.6);
 }
 

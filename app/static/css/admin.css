@@ -194,9 +194,18 @@ h1 { margin-top: 0; }
 }
 .settings-form label.radio { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); }
 .settings-form input[type=text],
-.settings-form input[type=number] {
+.settings-form input[type=number],
+.settings-form input[type=time] {
   padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px;
 }
+.settings-form .row-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+.settings-form .row-pair label { margin-bottom: 0; }
 
 /* Specials */
 .special-form {

@@ -53,7 +53,6 @@ body[data-theme="palindrome3"] .logo-slot {
   border: 1px solid rgba(8, 8, 8, 0.2);
 }
 body[data-theme="palindrome3"] .logo-slot.color-disc {
-  background: transparent !important;
   border: 4px solid #E9F1DA;
 }
 

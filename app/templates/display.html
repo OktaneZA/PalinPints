@@ -44,13 +44,18 @@
           <p>Coming soon</p>
         </div>
       {% endif %}
-      {% if price_cols %}
+      {% if grouped %}
         <div class="prices-header">
-          <div class="prices">
-            {% for kind, label_text in price_cols %}
-              <div class="price-head">{{ label_text }}</div>
-            {% endfor %}
-          </div>
+          <div class="style-head">Style</div>
+          <div class="tap-head">Tap</div>
+          <div class="beer-head">Beer</div>
+          {% if price_cols %}
+            <div class="prices">
+              {% for kind, label_text in price_cols %}
+                <div class="price-head">{{ label_text }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
         </div>
       {% endif %}
       {% for cat, beers in grouped %}
@@ -62,9 +67,9 @@
             {% else %}
               <div class="logo-slot"><img src="{{ tap.logo_url }}" alt="" onerror="this.src='{{ fallback_logo_url }}'"></div>
             {% endif %}
+            <div class="tap-num">{{ tap.tap_number }}</div>
             <div class="beer-main">
               <div class="line-1">
-                <span class="tap-num">{{ tap.tap_number }}</span>
                 <span class="brewery">{{ tap.brewery }}</span>
                 <span class="beer-name">{{ tap.beer_name }}</span>
               </div>
@@ -79,8 +84,9 @@
               {% for kind, label_text in price_cols %}
                 {% set price = tap['price_' ~ kind] %}
                 {% set enabled = tap['price_' ~ kind ~ '_enabled'] %}
-                <div class="price-cell">
-                  {% if enabled and price is not none %}
+                {% set has_price = enabled and price is not none %}
+                <div class="price-cell{% if not has_price %} is-empty{% endif %}">
+                  {% if has_price %}
                     <span class="price">£{{ '%.2f' % price }}</span>
                   {% endif %}
                 </div>

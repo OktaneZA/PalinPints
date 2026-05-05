@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from .db import get_db
+from .sun import effective_theme, ensure_sun_cache_fresh
 
 CATEGORY_TO_COLOR_FIELD = {
     "IPA & Pale Ales": "color_ipa",
@@ -29,6 +30,10 @@ def get_settings() -> dict[str, Any]:
 def update_settings(values: dict[str, Any]) -> None:
     allowed = {
         "home_brewery", "home_brewery_logo_path", "display_style", "theme",
+        "day_theme", "night_theme",
+        "latitude", "longitude",
+        "override_day_start", "override_night_start",
+        "cached_sunrise", "cached_sunset", "cache_fetched_at",
         "beers_per_page", "page_rotation_interval",
         "color_ipa", "color_sour", "color_stout",
         "color_lager", "color_belgian", "color_specialty",
@@ -173,6 +178,17 @@ def color_for_tap(tap: dict[str, Any], settings: dict[str, Any]) -> str:
 def state_snapshot() -> dict[str, Any]:
     """Full state used by the display. Stable JSON => stable hash."""
     settings = get_settings()
+
+    # Refresh the weekly sunrise/sunset cache lazily, only when stale.
+    refresh = ensure_sun_cache_fresh(settings)
+    if refresh:
+        update_settings(refresh)
+        settings.update(refresh)
+
+    # Pick the active theme based on current local time. The display
+    # only sees the resolved 'theme' key, so its template is unchanged.
+    settings["theme"] = effective_theme(settings)
+
     taps = list_taps(active_only=True)
     specials = list_specials(active_only=True)
     events = list_events(active_only=True)

@@ -51,7 +51,6 @@ body[data-theme="neon"] .logo-slot {
   box-shadow: 0 0 12px rgba(248, 112, 193, 0.25);
 }
 body[data-theme="neon"] .logo-slot.color-disc {
-  background: transparent !important;
   border: 4px solid rgba(255,255,255,0.85);
   box-shadow: 0 0 14px currentColor, inset 0 0 8px rgba(0,0,0,0.3);
 }
