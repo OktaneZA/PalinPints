@@ -26,13 +26,19 @@ The SQLite DB and image cache live under `data/` and are auto-created on first r
 
 ## Pi deployment
 
+For the full walkthrough — flashing the SD card with WiFi pre-configured, first-boot SSH, install, updates, Raspberry Pi Connect, changing WiFi later, and troubleshooting — see **[INSTALL.md](INSTALL.md)**.
+
+Short version, once the Pi is on the network:
+
 ```bash
 git clone https://github.com/OktaneZA/PalinPints.git ~/PalinPints
 cd ~/PalinPints
 bash scripts/install.sh
 ```
 
-`install.sh` creates the virtualenv, installs deps, sets up a `systemd --user` service, and configures Chromium to launch in kiosk mode pointing at `http://localhost:8080/` on boot.
+`install.sh` creates the virtualenv, installs deps, sets up a `systemd --user` service, configures Chromium to launch in kiosk mode pointing at `http://localhost:8080/` on boot, and offers to set up Raspberry Pi Connect for remote management.
+
+Update later with `bash scripts/update.sh`.
 
 ## Style categories
 
