@@ -236,9 +236,13 @@ def _parse_beer_page(html: str, beer_url: str) -> BeerHit:
     if brewery_el:
         hit.brewery = brewery_el.get_text(strip=True)
         href = brewery_el.get("href", "")
-        m = re.search(r"/([^/]+)$", href.rstrip("/"))
-        if m:
-            hit.brewery_slug = m.group(1)
+        # Brewery URLs come in two shapes:
+        #   /VerdantBrewingCo            (legacy)
+        #   /w/brasserie-cantillon/202   (newer wiki style)
+        # Keep the full path (minus leading slash) so we can rebuild the URL.
+        slug = href.strip("/")
+        if slug:
+            hit.brewery_slug = slug
 
     style_el = soup.select_one("p.style") or soup.select_one(".style")
     if style_el:
