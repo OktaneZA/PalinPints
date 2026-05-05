@@ -9,6 +9,9 @@
   <label>Title <input type="text" name="title" required placeholder="e.g. IPA Flight"></label>
   <label>Description <input type="text" name="description" placeholder="e.g. 4 × 1/3 pint"></label>
   <label>Price (£) <input type="number" step="0.05" name="price"></label>
+  <label class="active-toggle">
+    <input type="checkbox" name="active" value="1" checked> Active
+  </label>
   <button type="submit" class="btn btn-primary">Add</button>
 </form>
 
@@ -21,6 +24,9 @@
   <label>Title <input type="text" name="title" value="{{ s.title }}" required></label>
   <label>Description <input type="text" name="description" value="{{ s.description or '' }}"></label>
   <label>Price (£) <input type="number" step="0.05" name="price" value="{{ s.price if s.price is not none else '' }}"></label>
+  <label class="active-toggle">
+    <input type="checkbox" name="active" value="1" {% if s.active %}checked{% endif %}> Active
+  </label>
   <button type="submit" class="btn btn-secondary">Update</button>
   <button type="submit" class="btn btn-danger" formaction="{{ url_for('admin.delete_special_route', special_id=s.id) }}" onclick="return confirm('Delete this special?');">Delete</button>
 </form>

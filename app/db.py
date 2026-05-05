@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS taps (
 CREATE TABLE IF NOT EXISTS specials (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sort_order INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
     title TEXT NOT NULL,
     description TEXT,
     price REAL
@@ -112,6 +113,11 @@ def init_db() -> None:
         existing_cols = {c[1] for c in conn.execute("PRAGMA table_info(settings)").fetchall()}
         if "theme" not in existing_cols:
             conn.execute("ALTER TABLE settings ADD COLUMN theme TEXT NOT NULL DEFAULT 'marble'")
+
+        # Specials gained an active flag when events landed.
+        special_cols = {c[1] for c in conn.execute("PRAGMA table_info(specials)").fetchall()}
+        if "active" not in special_cols:
+            conn.execute("ALTER TABLE specials ADD COLUMN active INTEGER NOT NULL DEFAULT 1")
 
         # Tap price flags + 1/3 pint, added when the price model became flexible.
         tap_cols = {c[1] for c in conn.execute("PRAGMA table_info(taps)").fetchall()}

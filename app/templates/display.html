@@ -115,7 +115,10 @@
             <li class="event-item">
               <div class="ev-main">
                 <div class="ev-name">{{ e.name }}</div>
-                {% if e.event_date %}<div class="ev-date">{{ e.event_date }}</div>{% endif %}
+                {% if e.event_date %}
+                  {% set d = e.event_date.split('-') %}
+                  <div class="ev-date">{% if d|length == 3 %}{{ d[2] }}/{{ d[1] }}/{{ d[0] }}{% else %}{{ e.event_date }}{% endif %}</div>
+                {% endif %}
                 {% if e.location %}<div class="ev-location">{{ e.location }}</div>{% endif %}
               </div>
               {% if e.url %}

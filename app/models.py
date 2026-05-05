@@ -87,26 +87,29 @@ def clear_tap(tap_number: int) -> None:
     get_db().commit()
 
 
-def list_specials() -> list[dict[str, Any]]:
-    return [dict(r) for r in get_db().execute(
-        "SELECT * FROM specials ORDER BY sort_order, id"
-    ).fetchall()]
+def list_specials(active_only: bool = False) -> list[dict[str, Any]]:
+    sql = "SELECT * FROM specials"
+    if active_only:
+        sql += " WHERE active = 1"
+    sql += " ORDER BY sort_order, id"
+    return [dict(r) for r in get_db().execute(sql).fetchall()]
 
 
-def add_special(title: str, description: str | None, price: float | None) -> int:
+def add_special(title: str, description: str | None, price: float | None, active: int = 1) -> int:
     cur = get_db().execute(
-        "INSERT INTO specials (sort_order, title, description, price) "
-        "VALUES (COALESCE((SELECT MAX(sort_order)+1 FROM specials), 0), ?, ?, ?)",
-        (title, description, price),
+        "INSERT INTO specials (sort_order, active, title, description, price) "
+        "VALUES (COALESCE((SELECT MAX(sort_order)+1 FROM specials), 0), ?, ?, ?, ?)",
+        (active, title, description, price),
     )
     get_db().commit()
     return cur.lastrowid
 
 
-def update_special(special_id: int, title: str, description: str | None, price: float | None) -> None:
+def update_special(special_id: int, title: str, description: str | None,
+                   price: float | None, active: int = 1) -> None:
     get_db().execute(
-        "UPDATE specials SET title=?, description=?, price=? WHERE id=?",
-        (title, description, price, special_id),
+        "UPDATE specials SET title=?, description=?, price=?, active=? WHERE id=?",
+        (title, description, price, active, special_id),
     )
     get_db().commit()
 
@@ -171,7 +174,7 @@ def state_snapshot() -> dict[str, Any]:
     """Full state used by the display. Stable JSON => stable hash."""
     settings = get_settings()
     taps = list_taps(active_only=True)
-    specials = list_specials()
+    specials = list_specials(active_only=True)
     events = list_events(active_only=True)
 
     enriched_taps = []

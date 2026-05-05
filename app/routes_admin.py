@@ -170,8 +170,9 @@ def specials():
         title = (request.form.get("title") or "").strip()
         description = (request.form.get("description") or "").strip() or None
         price = _to_float(request.form.get("price"))
+        active = 1 if request.form.get("active") else 0
         if title:
-            add_special(title, description, price)
+            add_special(title, description, price, active)
             flash("Special added.", "success")
         return redirect(url_for("admin.specials"))
     return render_template("admin/specials.html", specials=list_specials())
@@ -182,8 +183,9 @@ def update_special_route(special_id: int):
     title = (request.form.get("title") or "").strip()
     description = (request.form.get("description") or "").strip() or None
     price = _to_float(request.form.get("price"))
+    active = 1 if request.form.get("active") else 0
     if title:
-        update_special(special_id, title, description, price)
+        update_special(special_id, title, description, price, active)
         flash("Special updated.", "success")
     return redirect(url_for("admin.specials"))
 
