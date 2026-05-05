@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Stem leaf -->
+  <path d="M28 4 Q30 8 30 13 L34 13 Q34 8 36 4 L32 6 Z" fill="#688531"/>
+  <!-- Hop cone body -->
+  <path d="M32 10
+           C 24 10 20 14 20 22
+           C 14 22 12 28 12 36
+           C 12 46 18 56 26 58
+           L 32 58
+           L 38 58
+           C 46 56 52 46 52 36
+           C 52 28 50 22 44 22
+           C 44 14 40 10 32 10 Z"
+        fill="#93BB48"/>
+  <!-- Scale dividers -->
+  <g stroke="#3e571e" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round" opacity="0.85">
+    <path d="M22 18 L 32 22 L 42 18"/>
+    <path d="M16 28 L 32 34 L 48 28"/>
+    <path d="M14 38 L 32 44 L 50 38"/>
+    <path d="M18 48 L 32 52 L 46 48"/>
+  </g>
+</svg>

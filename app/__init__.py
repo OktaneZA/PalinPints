@@ -23,6 +23,18 @@ STYLE_CATEGORIES = [
     "Historical & Specialty",
 ]
 
+# Per-theme hop fallback. Picked when a tap has no brewery logo cached.
+# Themes with light logo cards work best with the black variant; brand
+# themes use the green hop; chalkboard uses the outlined one.
+THEME_HOP_FALLBACK: dict[str, str] = {
+    "marble":      "img/hop-black.svg",
+    "neon":        "img/hop-black.svg",
+    "chalkboard":  "img/hop-outline.svg",
+    "palindrome1": "img/hop-green.svg",
+    "palindrome2": "img/hop-green.svg",
+    "palindrome3": "img/hop-black.svg",
+}
+
 DEFAULT_CATEGORY_COLORS = {
     "IPA & Pale Ales": "#E89923",
     "Sour & Wild Ales": "#D63B5E",

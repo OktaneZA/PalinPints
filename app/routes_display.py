@@ -3,24 +3,31 @@ from __future__ import annotations
 
 from flask import Blueprint, abort, jsonify, render_template, send_file, url_for
 
-from . import IMAGES_DIR, STYLE_CATEGORIES
+from . import IMAGES_DIR, STYLE_CATEGORIES, THEME_HOP_FALLBACK
 from .images import resolve_logo_path
 from .models import state_snapshot
 
 bp = Blueprint("display", __name__)
 
 
+def _hop_fallback_url(theme: str | None) -> str:
+    """Per-theme hop SVG URL. Falls back to the original green hop."""
+    asset = THEME_HOP_FALLBACK.get(theme or "", "img/hop-fallback.svg")
+    return url_for("static", filename=asset)
+
+
 @bp.route("/")
 def display():
     snap = state_snapshot()
     settings = snap["settings"]
+    fallback = _hop_fallback_url(settings.get("theme"))
     by_category: dict[str, list[dict]] = {c: [] for c in STYLE_CATEGORIES}
     for tap in snap["taps"]:
         cat = tap.get("style_category") or "Historical & Specialty"
         if cat not in by_category:
             by_category[cat] = []
         rel = resolve_logo_path(tap, settings)
-        tap["logo_url"] = url_for("serve_data_image", relpath=rel) if rel else url_for("static", filename="img/hop-fallback.svg")
+        tap["logo_url"] = url_for("serve_data_image", relpath=rel) if rel else fallback
         by_category[cat].append(tap)
 
     grouped = [(cat, by_category[cat]) for cat in STYLE_CATEGORIES if by_category.get(cat)]
@@ -31,6 +38,7 @@ def display():
         grouped=grouped,
         specials=snap["specials"],
         version_hash=snap["version_hash"],
+        fallback_logo_url=fallback,
     )
 
 
@@ -38,9 +46,11 @@ def display():
 def api_state():
     snap = state_snapshot()
     settings = snap["settings"]
+    fallback = _hop_fallback_url(settings.get("theme"))
     for tap in snap["taps"]:
         rel = resolve_logo_path(tap, settings)
-        tap["logo_url"] = url_for("serve_data_image", relpath=rel) if rel else url_for("static", filename="img/hop-fallback.svg")
+        tap["logo_url"] = url_for("serve_data_image", relpath=rel) if rel else fallback
+    snap["fallback_logo_url"] = fallback
     return jsonify(snap)
 
 

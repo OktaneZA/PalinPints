@@ -36,7 +36,7 @@
             {% if settings.display_style == 'color' %}
               <div class="logo-slot color-disc" style="background: {{ tap.display_color }};"></div>
             {% else %}
-              <div class="logo-slot"><img src="{{ tap.logo_url }}" alt="" onerror="this.src='{{ url_for('static', filename='img/hop-fallback.svg') }}'"></div>
+              <div class="logo-slot"><img src="{{ tap.logo_url }}" alt="" onerror="this.src='{{ fallback_logo_url }}'"></div>
             {% endif %}
             <div class="beer-main">
               <div class="line-1">
