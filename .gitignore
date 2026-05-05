@@ -3,6 +3,8 @@ __pycache__/
 .venv/
 venv/
 .env
+data/palipints.db
+data/palipints.db-journal
 data/palibeerview.db
 data/palibeerview.db-journal
 data/.secret_key

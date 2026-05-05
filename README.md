@@ -1,4 +1,4 @@
-# PalinPints
+# PaliPints
 
 Digital draft list for Palindrome Brewing Co — a Python/Flask app that runs on a Raspberry Pi, drives a horizontal TV via HDMI in Chromium kiosk mode, and exposes a LAN-only admin web UI for managing taps, prices, and specials.
 
@@ -31,8 +31,8 @@ For the full walkthrough — flashing the SD card with WiFi pre-configured, firs
 Short version, once the Pi is on the network:
 
 ```bash
-git clone https://github.com/OktaneZA/PalinPints.git ~/PalinPints
-cd ~/PalinPints
+git clone https://github.com/OktaneZA/PaliPints.git ~/PaliPints
+cd ~/PaliPints
 bash scripts/install.sh
 ```
 

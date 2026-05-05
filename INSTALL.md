@@ -1,4 +1,4 @@
-# PalinPints — Pi setup from scratch
+# PaliPints — Pi setup from scratch
 
 End-to-end guide: a blank SD card → a TV showing the draft list, with remote admin from your laptop.
 
@@ -34,7 +34,7 @@ Open Raspberry Pi Imager.
 Click **Next**, then **Edit Settings** when it asks if you want to apply OS customisation. This is the step that bakes WiFi credentials, hostname, and SSH access into the image so the Pi works on first boot without a keyboard.
 
 In the *General* tab:
-- **Set hostname**: `palinpints` (Pi will be reachable as `palinpints.local`)
+- **Set hostname**: `palipints` (Pi will be reachable as `palipints.local`)
 - **Set username and password**: pick any username (e.g. `pi`) and a strong password — note it down
 - **Configure wireless LAN**:
   - SSID: your WiFi network name
@@ -57,16 +57,16 @@ Eject the SD card, insert into the Pi, connect HDMI to the TV, then power on. Fi
 From your laptop (same network):
 
 ```bash
-ssh pi@palinpints.local
+ssh pi@palipints.local
 ```
 
-(Replace `pi` with whatever username you chose. If `palinpints.local` doesn't resolve on Windows, install [Bonjour Print Services](https://support.apple.com/en-us/106380) or use the Pi's IP address directly — find it via your router's admin page or `ping palinpints.local`.)
+(Replace `pi` with whatever username you chose. If `palipints.local` doesn't resolve on Windows, install [Bonjour Print Services](https://support.apple.com/en-us/106380) or use the Pi's IP address directly — find it via your router's admin page or `ping palipints.local`.)
 
 Confirm the host fingerprint, enter the password you set in the Imager, and you should land in `~`.
 
 ---
 
-## 4. Install PalinPints
+## 4. Install PaliPints
 
 In the SSH session:
 
@@ -75,22 +75,22 @@ In the SSH session:
 sudo apt update && sudo apt full-upgrade -y
 
 # Clone and install
-git clone https://github.com/OktaneZA/PalinPints.git ~/PalinPints
-cd ~/PalinPints
+git clone https://github.com/OktaneZA/PaliPints.git ~/PaliPints
+cd ~/PaliPints
 bash scripts/install.sh
 ```
 
 `install.sh` does:
 1. `apt install` of Python, Pillow build deps, Chromium, supporting tools
-2. Creates a Python virtualenv in `~/PalinPints/.venv` and installs `requirements.txt`
-3. Installs a `systemd --user` service (`palibeerview.service`) that runs the Flask app on port 8080 and restarts on failure
+2. Creates a Python virtualenv in `~/PaliPints/.venv` and installs `requirements.txt`
+3. Installs a `systemd --user` service (`palipints.service`) that runs the Flask app on port 8080 and restarts on failure
 4. Enables user lingering so the service starts at boot without anyone logging in
 5. Drops a Chromium kiosk launcher into `~/.config/autostart/` so the display appears on every boot
 6. Optionally sets up Raspberry Pi Connect for browser-based remote management (see §6)
 
 When it finishes, the script prints both URLs:
 
-- **Admin (LAN)**: `http://palinpints.local:8080/admin` or `http://<pi-ip>:8080/admin`
+- **Admin (LAN)**: `http://palipints.local:8080/admin` or `http://<pi-ip>:8080/admin`
 - **Display**: `http://localhost:8080/` (auto-launches in Chromium kiosk on next reboot)
 
 Reboot once to bring up the kiosk:
@@ -106,7 +106,7 @@ sudo reboot
 When new commits land on `main`, SSH into the Pi and run:
 
 ```bash
-cd ~/PalinPints
+cd ~/PaliPints
 bash scripts/update.sh
 ```
 
@@ -167,7 +167,7 @@ sudo nmcli connection up "<NAME>"
 
 ### 7.4 Last resort: re-flash the SD card
 
-If the Pi is in a venue you can't easily reach and WiFi has changed, the lowest-friction option is to pop the SD card out, plug it into your laptop, open Raspberry Pi Imager, choose *Use latest setup* with the new WiFi credentials in OS customisation, and overwrite. You'll lose the local DB and uploaded brewery logos, so back up `~/PalinPints/data/` first if you've configured anything important.
+If the Pi is in a venue you can't easily reach and WiFi has changed, the lowest-friction option is to pop the SD card out, plug it into your laptop, open Raspberry Pi Imager, choose *Use latest setup* with the new WiFi credentials in OS customisation, and overwrite. You'll lose the local DB and uploaded brewery logos, so back up `~/PaliPints/data/` first if you've configured anything important.
 
 ---
 
@@ -175,24 +175,24 @@ If the Pi is in a venue you can't easily reach and WiFi has changed, the lowest-
 
 ```bash
 # Tail the Flask app log
-journalctl --user -u palibeerview.service -f
+journalctl --user -u palipints.service -f
 
 # Status
-systemctl --user status palibeerview.service
+systemctl --user status palipints.service
 
 # Restart the app (after editing settings or pulling code manually)
-systemctl --user restart palibeerview.service
+systemctl --user restart palipints.service
 
 # Stop / disable
-systemctl --user stop palibeerview.service
-systemctl --user disable palibeerview.service
+systemctl --user stop palipints.service
+systemctl --user disable palipints.service
 ```
 
-The kiosk Chromium window is started by `~/.config/autostart/palinpints-kiosk.desktop`. If the display freezes:
+The kiosk Chromium window is started by `~/.config/autostart/palipints-kiosk.desktop`. If the display freezes:
 
 ```bash
 pkill chromium
-DISPLAY=:0 bash ~/palinpints-kiosk.sh &
+DISPLAY=:0 bash ~/palipints-kiosk.sh &
 ```
 
 ---
@@ -214,10 +214,10 @@ The customisation didn't take. Re-flash the SD card and double-check the WiFi co
   Then `sudo reboot`.
 
 **Display shows the page but Chromium isn't fullscreen**
-The autostart desktop file didn't fire. SSH in and run `bash ~/palinpints-kiosk.sh` manually to confirm the script works, then check that the Pi boots into a desktop session (not console) — `sudo raspi-config` → *System Options* → *Boot / Auto Login* → *Desktop Autologin*.
+The autostart desktop file didn't fire. SSH in and run `bash ~/palipints-kiosk.sh` manually to confirm the script works, then check that the Pi boots into a desktop session (not console) — `sudo raspi-config` → *System Options* → *Boot / Auto Login* → *Desktop Autologin*.
 
 **Admin URL works but display URL hangs**
-Flask app crashed. Check the log: `journalctl --user -u palibeerview.service -n 100`.
+Flask app crashed. Check the log: `journalctl --user -u palipints.service -n 100`.
 
 **Chromium uses too much RAM on a 2 GB Pi**
 Increase the swap in `/etc/dphys-swapfile` (`CONF_SWAPSIZE=1024`) and `sudo systemctl restart dphys-swapfile`. Long-term: a 4 GB Pi is more comfortable.

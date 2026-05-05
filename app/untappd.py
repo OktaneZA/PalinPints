@@ -35,7 +35,7 @@ from .db import get_db
 
 USER_AGENT = (
     "Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 PaliBeerView/1.0"
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 PaliPints/1.0"
 )
 CACHE_TTL_SECONDS = 24 * 60 * 60
 REQUEST_DELAY_SECONDS = 1.0

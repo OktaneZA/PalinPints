@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pull latest PalinPints code, refresh dependencies, and restart the service.
+# Pull latest PaliPints code, refresh dependencies, and restart the service.
 # Usage: bash scripts/update.sh
 
 set -euo pipefail
@@ -30,8 +30,8 @@ log "Refreshing Python dependencies..."
 .venv/bin/pip install --upgrade --quiet -r requirements.txt
 
 log "Restarting service..."
-systemctl --user restart palibeerview.service
+systemctl --user restart palipints.service
 
 sleep 1
-systemctl --user --no-pager --quiet is-active palibeerview.service \
+systemctl --user --no-pager --quiet is-active palipints.service \
     && log "Service is active."

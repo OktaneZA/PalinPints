@@ -1,5 +1,5 @@
 [Unit]
-Description=PaliBeerView (Flask app)
+Description=PaliPints (Flask app)
 After=network-online.target
 Wants=network-online.target
 

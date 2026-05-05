@@ -12,7 +12,8 @@ DATA_DIR = PROJECT_ROOT / "data"
 IMAGES_DIR = DATA_DIR / "images"
 UPLOADS_DIR = IMAGES_DIR / "uploads"
 BREWERIES_DIR = IMAGES_DIR / "breweries"
-DB_PATH = DATA_DIR / "palibeerview.db"
+DB_PATH = DATA_DIR / "palipints.db"
+LEGACY_DB_PATH = DATA_DIR / "palibeerview.db"
 
 STYLE_CATEGORIES = [
     "IPA & Pale Ales",
@@ -107,6 +108,11 @@ def _load_or_create_secret_key() -> str:
 def create_app() -> Flask:
     for d in (DATA_DIR, IMAGES_DIR, UPLOADS_DIR, BREWERIES_DIR):
         d.mkdir(parents=True, exist_ok=True)
+
+    # One-shot migration from the previous filename. Running installs that
+    # were started before the rename keep all their data.
+    if LEGACY_DB_PATH.exists() and not DB_PATH.exists():
+        LEGACY_DB_PATH.rename(DB_PATH)
 
     app = Flask(__name__, instance_relative_config=False)
     app.config["MAX_CONTENT_LENGTH"] = 8 * 1024 * 1024  # 8 MB upload cap

@@ -1,4 +1,4 @@
-# PaliBeerView — Requirements
+# PaliPints — Requirements
 
 ## Context
 
@@ -127,4 +127,4 @@ Display polls `/api/state` every 5 seconds. State endpoint returns a JSON snapsh
 - **Python**: 3.11+.
 - **Browser**: Chromium in kiosk mode, started on boot, pointed at `http://localhost:8080/`.
 - **Service**: Flask app runs as a `systemd` user service so it restarts on crash and starts on boot.
-- **Storage**: SQLite file at `data/palibeerview.db`. Images on disk under `data/images/`.
+- **Storage**: SQLite file at `data/palipints.db`. Images on disk under `data/images/`.

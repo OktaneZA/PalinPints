@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}PaliBeerView Admin{% endblock %}</title>
+  <title>{% block title %}PaliPints Admin{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
 <body>
   <header class="admin-header">
-    <div class="brand">PaliBeerView <span class="muted">admin</span></div>
+    <div class="brand">PaliPints <span class="muted">admin</span></div>
     <nav>
       <a href="{{ url_for('admin.taps') }}" {% if request.endpoint == 'admin.taps' %}class="active"{% endif %}>Taps</a>
       <a href="{{ url_for('admin.settings') }}" {% if request.endpoint == 'admin.settings' %}class="active"{% endif %}>Settings</a>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PalinPints Pi installer.
+# PaliPints Pi installer.
 # Run as the user that will own the kiosk session (typically `pi`).
 # Usage: bash scripts/install.sh
 #
@@ -13,7 +13,7 @@ SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
 AUTOSTART_DIR="$HOME/.config/autostart"
 
 log() { echo ">>> $*"; }
-log "PalinPints install for user $USER_NAME at $PROJECT_DIR"
+log "PaliPints install for user $USER_NAME at $PROJECT_DIR"
 
 # Sanity check: must be run on the Pi (or another Linux box), not from Windows.
 if ! command -v apt-get >/dev/null; then
@@ -42,29 +42,39 @@ fi
 # 3. systemd --user service for the Flask app
 log "Installing systemd user service..."
 mkdir -p "$SYSTEMD_USER_DIR"
-sed "s|@PROJECT_DIR@|$PROJECT_DIR|g" "$PROJECT_DIR/scripts/palibeerview.service" \
-    > "$SYSTEMD_USER_DIR/palibeerview.service"
+sed "s|@PROJECT_DIR@|$PROJECT_DIR|g" "$PROJECT_DIR/scripts/palipints.service" \
+    > "$SYSTEMD_USER_DIR/palipints.service"
+
+# Clean up the old service name from previous installs (safe if missing).
+if [ -f "$SYSTEMD_USER_DIR/palibeerview.service" ]; then
+    log "Removing old palibeerview.service unit..."
+    systemctl --user disable --now palibeerview.service 2>/dev/null || true
+    rm -f "$SYSTEMD_USER_DIR/palibeerview.service"
+fi
 
 # Enable lingering so the user service starts at boot without login
 sudo loginctl enable-linger "$USER_NAME"
 
 systemctl --user daemon-reload
-systemctl --user enable palibeerview.service
-systemctl --user restart palibeerview.service
+systemctl --user enable palipints.service
+systemctl --user restart palipints.service
 
 # 4. Chromium kiosk autostart
 log "Installing Chromium kiosk autostart..."
 mkdir -p "$AUTOSTART_DIR"
-cp "$PROJECT_DIR/scripts/kiosk-autostart.sh" "$HOME/palinpints-kiosk.sh"
-chmod +x "$HOME/palinpints-kiosk.sh"
+cp "$PROJECT_DIR/scripts/kiosk-autostart.sh" "$HOME/palipints-kiosk.sh"
+chmod +x "$HOME/palipints-kiosk.sh"
+# Remove old kiosk script names from previous installs.
+rm -f "$HOME/palinpints-kiosk.sh" "$HOME/palibeerview-kiosk.sh"
 
-cat > "$AUTOSTART_DIR/palinpints-kiosk.desktop" <<EOF
+cat > "$AUTOSTART_DIR/palipints-kiosk.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=PalinPints Kiosk
-Exec=/bin/bash $HOME/palinpints-kiosk.sh
+Name=PaliPints Kiosk
+Exec=/bin/bash $HOME/palipints-kiosk.sh
 X-GNOME-Autostart-enabled=true
 EOF
+rm -f "$AUTOSTART_DIR/palinpints-kiosk.desktop" "$AUTOSTART_DIR/palibeerview-kiosk.desktop"
 
 # 5. Optional: Raspberry Pi Connect for remote management
 log "Optional: Raspberry Pi Connect for remote browser-based access."
@@ -87,4 +97,4 @@ log "Done."
 log "Admin:    http://${IP:-<pi-ip>}:8080/admin"
 log "Display:  http://localhost:8080/  (auto-launches after reboot)"
 log "Update:   bash scripts/update.sh"
-log "Logs:     journalctl --user -u palibeerview.service -f"
+log "Logs:     journalctl --user -u palipints.service -f"
