@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
-from . import STYLE_CATEGORIES
+from . import STYLE_CATEGORIES, STYLE_SUBSTYLES
 from .images import save_upload
 from .models import (
     add_special,
@@ -52,6 +52,7 @@ def taps():
         taps=list_taps(),
         settings=settings,
         categories=STYLE_CATEGORIES,
+        substyles=STYLE_SUBSTYLES,
     )
 
 
@@ -65,17 +66,41 @@ def save_tap(tap_number: int):
     if "image" in request.files:
         image_path = save_upload(request.files["image"])
 
+    active = 1 if f.get("active") else 0
+    brewery = (f.get("brewery") or "").strip() or None
+    beer_name = (f.get("beer_name") or "").strip() or None
+    abv = _to_float(f.get("abv"))
+    price_half = _to_float(f.get("price_half"))
+    price_pint = _to_float(f.get("price_pint"))
+
+    # Mandatory fields apply when the tap is active. Inactive rows can be
+    # saved/cleared with anything missing.
+    if active:
+        missing = []
+        if not brewery: missing.append("brewery")
+        if not beer_name: missing.append("beer name")
+        if abv is None: missing.append("ABV %")
+        if price_half is None: missing.append("½ pint price")
+        if price_pint is None: missing.append("pint price")
+        if missing:
+            flash(
+                f"Tap {tap_number} not saved — missing required field(s): "
+                + ", ".join(missing) + ".",
+                "error",
+            )
+            return redirect(url_for("admin.taps"))
+
     values = {
-        "active": 1 if f.get("active") else 0,
-        "brewery": f.get("brewery") or None,
-        "beer_name": f.get("beer_name") or None,
+        "active": active,
+        "brewery": brewery,
+        "beer_name": beer_name,
         "style_category": f.get("style_category") or None,
-        "sub_style": f.get("sub_style") or None,
-        "abv": _to_float(f.get("abv")),
+        "sub_style": (f.get("sub_style") or "").strip() or None,
+        "abv": abv,
         "ibu": _to_int(f.get("ibu")),
-        "location": f.get("location") or None,
-        "price_half": _to_float(f.get("price_half")),
-        "price_pint": _to_float(f.get("price_pint")),
+        "location": (f.get("location") or "").strip() or None,
+        "price_half": price_half,
+        "price_pint": price_pint,
         "price_takeaway": _to_float(f.get("price_takeaway")),
         "color_override": (f.get("color_override") or None) if f.get("use_color_override") else None,
         "untappd_slug": f.get("untappd_slug") or None,

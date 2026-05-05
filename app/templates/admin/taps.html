@@ -2,10 +2,19 @@
 {% block title %}Taps · PaliBeerView{% endblock %}
 {% block content %}
 <h1>Taps</h1>
-<p class="hint">Home brewery: <strong>{{ settings.home_brewery }}</strong> — pre-fills the brewery on new taps.</p>
+<p class="hint">
+  Home brewery: <strong>{{ settings.home_brewery }}</strong> — pre-fills the brewery on new taps.
+  <br>
+  Required when active: brewery, beer name, ABV %, ½ pint price, pint price. Other fields optional.
+</p>
+
+<datalist id="brewery-list"></datalist>
+
+{# Substyle data is embedded for JS; one datalist per row gets repopulated when category changes. #}
+<script id="substyle-data" type="application/json">{{ substyles|tojson }}</script>
 
 {% for tap in taps %}
-<section class="tap-card {% if tap.active %}is-active{% endif %}">
+<section class="tap-card {% if tap.active %}is-active{% endif %}" data-tap="{{ tap.tap_number }}">
   <form method="post" action="{{ url_for('admin.save_tap', tap_number=tap.tap_number) }}" enctype="multipart/form-data" data-tap-form>
     <header class="tap-card-header">
       <span class="tap-num">#{{ tap.tap_number }}</span>
@@ -18,14 +27,16 @@
     </header>
 
     <div class="tap-grid">
-      <label>Brewery
-        <input type="text" name="brewery" value="{{ tap.brewery or settings.home_brewery }}" data-field="brewery">
+      <label>Brewery <span class="req">*</span>
+        <input type="text" name="brewery" list="brewery-list"
+               value="{{ tap.brewery or settings.home_brewery }}"
+               data-field="brewery" autocomplete="off">
       </label>
-      <label>Beer name
+      <label>Beer name <span class="req">*</span>
         <input type="text" name="beer_name" value="{{ tap.beer_name or '' }}" data-field="beer_name">
       </label>
       <label>Style category
-        <select name="style_category" data-field="style_category">
+        <select name="style_category" data-field="style_category" data-substyle-driver>
           <option value="">—</option>
           {% for cat in categories %}
             <option value="{{ cat }}" {% if tap.style_category == cat %}selected{% endif %}>{{ cat }}</option>
@@ -33,21 +44,25 @@
         </select>
       </label>
       <label>Sub-style
-        <input type="text" name="sub_style" value="{{ tap.sub_style or '' }}" placeholder="e.g. American IPA" data-field="sub_style">
+        <input type="text" name="sub_style" list="substyle-list-{{ tap.tap_number }}"
+               value="{{ tap.sub_style or '' }}"
+               placeholder="pick or type your own"
+               data-field="sub_style" autocomplete="off">
+        <datalist id="substyle-list-{{ tap.tap_number }}" data-substyle-options></datalist>
       </label>
-      <label>ABV %
+      <label>ABV % <span class="req">*</span>
         <input type="number" step="0.1" name="abv" value="{{ tap.abv if tap.abv is not none else '' }}" data-field="abv">
       </label>
       <label>IBU
         <input type="number" step="1" name="ibu" value="{{ tap.ibu if tap.ibu is not none else '' }}" data-field="ibu">
       </label>
       <label>Location
-        <input type="text" name="location" value="{{ tap.location or '' }}" placeholder="e.g. Milwaukee, WI" data-field="location">
+        <input type="text" name="location" value="{{ tap.location or '' }}" placeholder="e.g. Faversham, UK" data-field="location">
       </label>
-      <label>½ pint £
+      <label>½ pint £ <span class="req">*</span>
         <input type="number" step="0.05" name="price_half" value="{{ tap.price_half if tap.price_half is not none else '' }}">
       </label>
-      <label>Pint £
+      <label>Pint £ <span class="req">*</span>
         <input type="number" step="0.05" name="price_pint" value="{{ tap.price_pint if tap.price_pint is not none else '' }}">
       </label>
       <label>Takeaway £
@@ -76,6 +91,8 @@
     <div class="tap-card-footer">
       <span class="untappd-status" data-untappd-status></span>
     </div>
+
+    <div class="untappd-results" data-untappd-results hidden></div>
   </form>
 
   {% if tap.active or tap.beer_name %}

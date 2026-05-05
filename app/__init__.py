@@ -32,6 +32,52 @@ DEFAULT_CATEGORY_COLORS = {
     "Historical & Specialty": "#6E1A28",
 }
 
+STYLE_SUBSTYLES: dict[str, list[str]] = {
+    "IPA & Pale Ales": [
+        "American IPA", "New England / Hazy IPA", "West Coast IPA",
+        "Double / Imperial IPA", "Triple IPA", "Session IPA",
+        "Black IPA", "White IPA", "English IPA", "Belgian IPA",
+        "Brut IPA", "American Pale Ale", "English Pale Ale",
+        "Blonde Ale", "Cream Ale", "Hoppy Lager",
+    ],
+    "Sour & Wild Ales": [
+        "American Wild Ale", "Berliner Weisse", "Gose",
+        "Lambic - Gueuze", "Lambic - Fruit", "Lambic - Faro",
+        "Lambic - Traditional", "Flanders Red Ale",
+        "Flanders Oud Bruin", "Brett Beer", "Fruited Sour Ale",
+    ],
+    "Stout & Porter": [
+        "American Stout", "American Porter", "English Porter",
+        "Baltic Porter", "Imperial Stout", "Russian Imperial Stout",
+        "Milk / Sweet Stout", "Oatmeal Stout", "Coffee Stout",
+        "Pastry Stout", "Dry Stout", "Foreign / Export Stout",
+        "Imperial Coffee Porter",
+    ],
+    "Lager & Pilsner": [
+        "American Lager", "American Light Lager", "Helles",
+        "Munich Dunkel", "Bock", "Doppelbock", "Maibock", "Eisbock",
+        "Vienna Lager", "Czech Pilsner", "German Pilsner",
+        "Italian Pilsner", "Mexican Lager", "Schwarzbier",
+        "Märzen / Oktoberfest", "Pale Lager",
+    ],
+    "Belgian & Farmhouse": [
+        "Belgian Blonde", "Belgian Strong Pale", "Belgian Strong Dark",
+        "Belgian Tripel", "Belgian Dubbel", "Belgian Quadrupel",
+        "Belgian Witbier", "Saison / Farmhouse", "Bière de Garde",
+        "Belgian IPA", "Trappist Single",
+    ],
+    "Historical & Specialty": [
+        "Smoked Beer / Rauchbier", "Barleywine - American",
+        "Barleywine - English", "Old Ale", "Scottish Ale",
+        "Wee Heavy / Scotch Ale", "Strong Ale - American",
+        "Pumpkin / Yam Beer", "Fruit Beer",
+        "Spice / Herb / Vegetable Beer", "Christmas / Winter Warmer",
+        "Hefeweizen", "Dunkelweizen", "Weizenbock", "Roggenbier",
+        "California Common", "Kölsch", "Altbier", "Honey Beer",
+        "Gluten-Free", "Non-Alcoholic",
+    ],
+}
+
 
 def _load_or_create_secret_key() -> str:
     env = os.environ.get("PALIBEERVIEW_SECRET_KEY")
