@@ -321,17 +321,30 @@ def brewery_name_slug(brewery_name: str | None) -> str:
     return re.sub(r"[^a-z0-9_-]+", "-", brewery_name.lower()).strip("-")
 
 
-def download_brewery_logo(brewery_name: str, logo_url: str) -> str | None:
+def download_brewery_logo(brewery_name: str, logo_url: str | None) -> str | None:
     """Download a brewery logo into BREWERIES_DIR keyed by the brewery's
-    display-name slug. Returns the relative path to the saved image."""
-    if not logo_url or not brewery_name:
+    display-name slug. Returns the relative path to the saved image. If we
+    already have the file on disk for this brewery, skip the download."""
+    if not brewery_name:
         return None
+
+    slug = brewery_name_slug(brewery_name) or "brewery"
+
+    # Already cached and present on disk? Don't re-download.
+    cached = get_cached_brewery_logo(brewery_name)
+    if cached:
+        on_disk = BREWERIES_DIR / Path(cached).name
+        if on_disk.is_file():
+            return cached
+
+    if not logo_url:
+        return cached  # nothing to fetch with — return whatever we have (or None)
+
     ext = ".png"
     m = re.search(r"\.(png|jpg|jpeg|gif|webp)(?:\?|$)", logo_url, re.IGNORECASE)
     if m:
         ext = "." + m.group(1).lower()
 
-    slug = brewery_name_slug(brewery_name) or "brewery"
     dest = BREWERIES_DIR / f"{slug}{ext}"
 
     try:
