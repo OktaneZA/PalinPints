@@ -112,32 +112,44 @@
     resultsBox.hidden = true;
     resultsBox.innerHTML = '';
 
-    // Apply basic fields immediately for snappy feedback.
-    fillField(form, 'brewery', hit.brewery);
-    fillField(form, 'beer_name', hit.beer_name);
-    fillField(form, 'sub_style', hit.sub_style);
-    if (hit.abv != null) fillField(form, 'abv', hit.abv);
-    if (hit.ibu != null) fillField(form, 'ibu', hit.ibu);
-    fillField(form, 'untappd_slug', hit.untappd_slug);
+    // Untappd-driven fields: always overwrite, clearing whatever was there.
+    // This prevents stale values (e.g. previous beer's location) lingering
+    // when Untappd has no data for the new pick.
+    setField(form, 'brewery', hit.brewery);
+    setField(form, 'beer_name', hit.beer_name);
+    setField(form, 'sub_style', hit.sub_style);
+    setField(form, 'abv', hit.abv);
+    setField(form, 'ibu', hit.ibu);
+    setField(form, 'untappd_slug', hit.untappd_slug);
+    // Search results never include location; clear so detail fetch fills it.
+    setField(form, 'location', '');
 
-    // Try to map sub-style to a category for the dropdown driver if not already set.
     autoSelectCategoryFromSubstyle(form, hit.sub_style);
 
-    // Then resolve detail (location + brewery logo download) in the background.
+    // Detail fetch resolves location + downloads brewery logo, and may
+    // refine ABV/IBU/sub_style with values from the beer page.
     if (hit.untappd_slug) {
       try {
         const r = await fetch('/admin/api/untappd/select?slug=' + encodeURIComponent(hit.untappd_slug));
         const detail = await r.json();
         if (detail && !detail.error) {
-          if (detail.location) fillField(form, 'location', detail.location);
-          if (detail.ibu != null) fillField(form, 'ibu', detail.ibu);
-          if (detail.abv != null && !form.querySelector('[data-field="abv"]').value) {
-            fillField(form, 'abv', detail.abv);
-          }
+          if (detail.brewery)   setField(form, 'brewery', detail.brewery);
+          if (detail.beer_name) setField(form, 'beer_name', detail.beer_name);
+          if (detail.sub_style) setField(form, 'sub_style', detail.sub_style);
+          if (detail.abv != null) setField(form, 'abv', detail.abv);
+          if (detail.ibu != null) setField(form, 'ibu', detail.ibu);
+          if (detail.location)  setField(form, 'location', detail.location);
         }
-      } catch (e) { /* basic fields already in, swallow */ }
+      } catch (e) { /* basic fields already applied; swallow */ }
     }
     showStatus(status, 'Filled from Untappd. Add prices and Save.', 'success');
+  }
+
+  // Always overwrites the field, including clearing it when value is null/empty.
+  function setField(form, name, value) {
+    const el = form.querySelector(`[data-field="${name}"]`);
+    if (!el) return;
+    el.value = (value == null) ? '' : value;
   }
 
   function autoSelectCategoryFromSubstyle(form, substyle) {

@@ -258,34 +258,33 @@ def _parse_beer_page(html: str, beer_url: str) -> BeerHit:
         except ValueError:
             pass
 
-    # Location: try a few specific selectors; only accept if it actually
-    # looks like a place (contains a comma) to avoid misreading the style.
-    for sel in [".brewery-location", "p.brewery-location", "p.location"]:
-        loc_el = soup.select_one(sel)
-        if loc_el:
-            text = loc_el.get_text(strip=True)
-            if text and "," in text:
-                hit.location = text
-                break
-
+    # The beer page often has stray `.location` elements from recent
+    # check-ins (someone's local pub) that aren't the brewery's location.
+    # The brewery page is the authoritative source — fetch it (we need it
+    # for the logo anyway) and pull location from there.
     if hit.brewery_slug:
         try:
-            logo_url = _fetch_brewery_logo_url(hit.brewery_slug)
-            hit.brewery_logo_url = logo_url
+            info = _fetch_brewery_info(hit.brewery_slug)
+            hit.brewery_logo_url = info.get("logo_url")
+            hit.location = info.get("location") or None
         except httpx.HTTPError:
             pass
 
     return hit
 
 
-def _fetch_brewery_logo_url(brewery_slug: str) -> str | None:
-    cache_key = f"brewery_logo:{brewery_slug}"
+def _fetch_brewery_info(brewery_slug: str) -> dict[str, Any]:
+    """Returns {'logo_url': ..., 'location': ...} for a brewery, both optional."""
+    cache_key = f"brewery_info:{brewery_slug}"
     cached = _cache_get(cache_key)
     if cached:
-        return cached.get("logo_url")
+        return cached
 
     html = _polite_get(f"https://untappd.com/{brewery_slug}")
     soup = BeautifulSoup(html, "html.parser")
+
+    info: dict[str, Any] = {"logo_url": None, "location": None}
+
     for sel in [
         "div.label img",
         "a.label img",
@@ -294,11 +293,24 @@ def _fetch_brewery_logo_url(brewery_slug: str) -> str | None:
     ]:
         img = soup.select_one(sel)
         if img and img.get("src"):
-            url = img["src"]
-            _cache_set(cache_key, {"logo_url": url})
-            return url
-    _cache_set(cache_key, {"logo_url": None})
-    return None
+            info["logo_url"] = img["src"]
+            break
+
+    for sel in [".location", "span.location", "p.location", ".brewery-location"]:
+        loc_el = soup.select_one(sel)
+        if loc_el:
+            text = loc_el.get_text(strip=True)
+            if text and "," in text:
+                info["location"] = text
+                break
+
+    _cache_set(cache_key, info)
+    return info
+
+
+# Backwards-compatible shim — older callers expected just the logo URL.
+def _fetch_brewery_logo_url(brewery_slug: str) -> str | None:
+    return _fetch_brewery_info(brewery_slug).get("logo_url")
 
 
 def download_brewery_logo(brewery_slug: str, logo_url: str) -> str | None:
