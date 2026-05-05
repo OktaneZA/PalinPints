@@ -45,7 +45,7 @@
       }
 
       btn.disabled = true;
-      showStatus(status, 'Searching Untappd…', '');
+      showStatus(status, 'Searching the web…', '');
       resultsBox.hidden = true;
       resultsBox.innerHTML = '';
 
@@ -55,13 +55,13 @@
 
         if (data.error && (!data.results || !data.results.length)) {
           showStatus(status,
-            `No matches on Untappd${data.error ? ' (' + data.error + ')' : ''} — fill the fields manually below.`,
+            `No matches found${data.error ? ' (' + data.error + ')' : ''} — fill the fields manually below.`,
             'error');
           return;
         }
         renderResultsPicker(form, status, resultsBox, data.results || []);
       } catch (e) {
-        showStatus(status, 'Network error talking to Untappd.', 'error');
+        showStatus(status, 'Network error during web search.', 'error');
       } finally {
         btn.disabled = false;
       }
@@ -90,7 +90,7 @@
     `).join('');
 
     resultsBox.innerHTML = `
-      <div class="ur-header">${results.length} result${results.length === 1 ? '' : 's'} from Untappd — pick one to autofill, or close and edit manually.</div>
+      <div class="ur-header">${results.length} result${results.length === 1 ? '' : 's'} found — pick one to autofill, or close and edit manually.</div>
       <ul class="untappd-result-list">${items}</ul>
       <button type="button" class="btn btn-secondary" data-untappd-close>None match — close</button>
     `;
@@ -142,7 +142,7 @@
         }
       } catch (e) { /* basic fields already applied; swallow */ }
     }
-    showStatus(status, 'Filled from Untappd. Add prices and Save.', 'success');
+    showStatus(status, 'Filled from web search. Add prices and Save.', 'success');
   }
 
   // Always overwrites the field, including clearing it when value is null/empty.

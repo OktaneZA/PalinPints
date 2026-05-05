@@ -7,7 +7,7 @@ Palindrome Brewing Co needs a digital draft list shown on a horizontally-mounted
 1. **Admin web app** — a local-network site for staff to manage taps, prices, specials, and display settings.
 2. **TV display app** — a fullscreen page rendered in Chromium kiosk mode that shows the current draft list, grouped by beer style category, with a rotating multi-page layout when there are more taps than fit on one page.
 
-The system should make day-to-day tap turnover fast: type a beer name, let it autofill from Untappd (label scraping), tweak if needed, save — the TV updates within seconds.
+The system should make day-to-day tap turnover fast: type a beer name, let it autofill from a web lookup, tweak if needed, save — the TV updates within seconds.
 
 ## Goals
 
@@ -47,7 +47,7 @@ Served by the same Python process that serves the display. Bound to the Pi's LAN
   - Beer color override (color picker; blank = use category default)
   - Image override (file upload; blank = use scraped/fallback)
   - "Active" toggle (inactive taps are hidden from the display)
-- "Search Untappd" button per row — fetches name, brewery, sub-style, ABV, IBU, location, and the brewery's logo. All fields stay editable after autofill.
+- "Search the web" button per row — fetches name, brewery, sub-style, ABV, IBU, location, and the brewery's logo. All fields stay editable after autofill.
 - Drag-to-reorder is **not** required; tap number is the canonical order.
 
 **FR1.2 Settings page**
@@ -82,25 +82,24 @@ Single fullscreen page at `/`. Designed for **1920×1080 horizontal**. Auto-poll
 - **Specials panel** in the bottom-right corner: persistent, does not rotate with tap pages. Hidden if no specials are configured.
 - Empty state: if zero active taps, show the Palindrome logo centered with "Coming soon".
 
-### FR3. Untappd integration (public-page scraping)
+### FR3. Web search integration
 
-Untappd partner API is unavailable. Scrape public pages instead.
+The "Search the web" button on each tap row autofills brewery, beer name, sub-style, ABV, IBU, location and the brewery logo from a public beer source.
 
-- Search endpoint: `https://untappd.com/search?q=<query>` returns beer result cards.
-- Beer page: `https://untappd.com/b/<slug>/<id>` contains brewery, style, ABV, IBU, brewery location, and a brewery logo URL.
-- Brewery page: `https://untappd.com/<brewery-slug>` for the brewery logo.
-- Parse with BeautifulSoup; encapsulate selectors in **one** module (`untappd.py`) so they can be fixed in one place when Untappd changes its markup.
-- Cache scraped responses by query/slug for 24h to avoid hammering Untappd.
-- Download brewery logos to `data/images/breweries/<slug>.<ext>` (cached forever; admin can clear).
-- Set a polite User-Agent and a 1s delay between requests.
-- Failure mode: surface a non-blocking warning in the admin UI — staff can still fill the row by hand.
+- Returns up to 5 matches; admin picks one to apply.
+- Caches search results and parsed detail for 24h to avoid hammering the source.
+- Downloads brewery logos to `data/images/breweries/<slug>.<ext>` (cached indefinitely; admin can clear by deleting the file).
+- Sets a polite User-Agent and a 1s delay between outbound requests.
+- Failure mode: surfaces a non-blocking warning in the admin UI — staff can still fill the row by hand.
+
+Implementation note: the current backend scrapes public Untappd pages, encapsulated in `app/untappd.py` so the data source can be swapped without touching the rest of the app.
 
 ### FR4. Image fallbacks (in priority order)
 
 When the display style is "Brewery logo":
 1. Admin-uploaded image override on the tap (if any).
 2. Home brewery logo (from settings) if the beer's brewery == home brewery.
-3. Cached brewery logo scraped from Untappd.
+3. Cached brewery logo from a previous web lookup.
 4. Bundled hop silhouette PNG (`static/img/hop-fallback.png`).
 
 ### FR5. Live updates
