@@ -75,7 +75,7 @@ In the SSH session:
 sudo apt update && sudo apt full-upgrade -y
 
 # Clone and install
-git clone https://github.com/OktaneZA/PaliPints.git ~/PaliPints
+git clone https://github.com/OktaneZA/PalinPints.git ~/PaliPints
 cd ~/PaliPints
 bash scripts/install.sh
 ```

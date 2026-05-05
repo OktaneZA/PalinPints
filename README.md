@@ -31,7 +31,7 @@ For the full walkthrough — flashing the SD card with WiFi pre-configured, firs
 Short version, once the Pi is on the network:
 
 ```bash
-git clone https://github.com/OktaneZA/PaliPints.git ~/PaliPints
+git clone https://github.com/OktaneZA/PalinPints.git ~/PaliPints
 cd ~/PaliPints
 bash scripts/install.sh
 ```
