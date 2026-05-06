@@ -105,7 +105,7 @@ The "Search the web" button on each tap row autofills brewery, beer name, sub-st
 - Sets a polite User-Agent and a 1s delay between outbound requests.
 - Failure mode: surfaces a non-blocking warning in the admin UI — staff can still fill the row by hand.
 
-Implementation note: the current backend scrapes public Untappd pages, encapsulated in `app/untappd.py` so the data source can be swapped without touching the rest of the app.
+Implementation note: the current backend scrapes public beer pages, encapsulated in `app/internetscraping.py` so the data source can be swapped without touching the rest of the app.
 
 ### FR4. Image fallbacks (in priority order)
 

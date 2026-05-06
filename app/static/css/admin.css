@@ -132,14 +132,14 @@ h1 { margin-top: 0; }
 }
 
 .tap-card-footer { margin-top: 10px; min-height: 16px; }
-.untappd-status { font-size: 12px; color: var(--muted); }
-.untappd-status.error { color: var(--danger); }
-.untappd-status.success { color: var(--success); }
+.web-search-status { font-size: 12px; color: var(--muted); }
+.web-search-status.error { color: var(--danger); }
+.web-search-status.success { color: var(--success); }
 
 .req { color: var(--accent); font-weight: 700; margin-left: 2px; }
 
-/* Untappd multi-result picker */
-.untappd-results {
+/* Web search multi-result picker */
+.web-search-results {
   margin-top: 12px;
   padding: 12px 14px;
   background: var(--surface-soft);
@@ -147,11 +147,11 @@ h1 { margin-top: 0; }
   border-radius: 8px;
 }
 .ur-header { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
-.untappd-result-list {
+.web-search-result-list {
   list-style: none; margin: 0; padding: 0;
   display: flex; flex-direction: column; gap: 6px;
 }
-.untappd-result {
+.web-search-result {
   display: grid;
   grid-template-columns: 56px 1fr auto;
   gap: 12px;
@@ -175,7 +175,7 @@ h1 { margin-top: 0; }
   display: flex; flex-wrap: wrap; gap: 12px;
   font-size: 12px; color: var(--muted);
 }
-.untappd-results [data-untappd-close] { margin-top: 10px; }
+.web-search-results [data-web-search-close] { margin-top: 10px; }
 
 .clear-form { margin-top: 10px; }
 .thumb { height: 32px; width: 32px; object-fit: contain; vertical-align: middle; border: 1px solid var(--border); border-radius: 4px; padding: 2px; background: var(--card); }

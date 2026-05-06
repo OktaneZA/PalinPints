@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 CACHE_TTL = timedelta(days=7)
 NIGHT_LEAD_MINUTES = 30  # switch to night theme this long before sunset
 
-# Pure-python httpx client with the OS trust store, matching app/untappd.py.
+# Pure-python httpx client with the OS trust store, matching app/internetscraping.py.
 _SSL_CTX = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
 

@@ -6,9 +6,15 @@ from dataclasses import asdict
 from flask import Blueprint, jsonify, request
 
 from .db import get_db
-from .untappd import download_brewery_logo, fetch_beer_detail, search_beers
+from .internetscraping import download_brewery_logo, fetch_beer_detail, search_beers
 
 bp = Blueprint("api", __name__, url_prefix="/admin/api")
+
+
+def _public_hit(hit) -> dict:
+    payload = asdict(hit)
+    payload["source_slug"] = payload.pop("untappd_slug", None)
+    return payload
 
 
 @bp.route("/breweries")
@@ -22,9 +28,9 @@ def breweries():
     return jsonify([r["brewery"] for r in rows])
 
 
-@bp.route("/untappd/search")
-def untappd_search():
-    """Return up to N parsed Untappd search results for the query."""
+@bp.route("/web-search/search")
+def web_search():
+    """Return up to N parsed beer search results for the query."""
     query = (request.args.get("q") or "").strip()
     if not query:
         return jsonify({"error": "missing query", "results": []}), 400
@@ -38,19 +44,19 @@ def untappd_search():
     return jsonify({
         "query": query,
         "error": err,
-        "results": [asdict(h) for h in results],
+        "results": [_public_hit(h) for h in results],
     })
 
 
-@bp.route("/untappd/select")
-def untappd_select():
+@bp.route("/web-search/select")
+def web_select():
     """Fetch full detail for a selected slug + download brewery logo."""
     slug = (request.args.get("slug") or "").strip()
     if not slug:
         return jsonify({"error": "missing slug"}), 400
 
     hit = fetch_beer_detail(slug)
-    payload = asdict(hit)
+    payload = _public_hit(hit)
     if hit.brewery_logo_url and hit.brewery and not hit.error:
         rel = download_brewery_logo(hit.brewery, hit.brewery_logo_url)
         payload["brewery_logo_local"] = rel

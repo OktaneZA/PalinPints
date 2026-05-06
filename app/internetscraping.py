@@ -1,5 +1,5 @@
 """
-Untappd public-page scraper.
+Public beer-page scraper.
 
 This is the ONE place that knows about Untappd's HTML. When Untappd ships a
 markup change, fix the selectors here only.

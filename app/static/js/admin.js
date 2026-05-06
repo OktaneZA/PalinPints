@@ -28,13 +28,13 @@
     if (driver) driver.addEventListener('change', () => refreshSubstyleOptions(form));
   });
 
-  // ---- Untappd multi-result search ---------------------------------------
-  document.querySelectorAll('[data-untappd-search]').forEach(btn => {
+  // ---- Web search multi-result picker ------------------------------------
+  document.querySelectorAll('[data-web-search]').forEach(btn => {
     btn.addEventListener('click', async ev => {
       const form = ev.target.closest('form[data-tap-form]');
       if (!form) return;
-      const status = form.querySelector('[data-untappd-status]');
-      const resultsBox = form.querySelector('[data-untappd-results]');
+      const status = form.querySelector('[data-web-search-status]');
+      const resultsBox = form.querySelector('[data-web-search-results]');
       const beerInput = form.querySelector('[data-field="beer_name"]');
       const breweryInput = form.querySelector('[data-field="brewery"]');
       const query = [breweryInput?.value, beerInput?.value].filter(Boolean).join(' ').trim();
@@ -50,7 +50,7 @@
       resultsBox.innerHTML = '';
 
       try {
-        const r = await fetch('/admin/api/untappd/search?q=' + encodeURIComponent(query));
+        const r = await fetch('/admin/api/web-search/search?q=' + encodeURIComponent(query));
         const data = await r.json();
 
         if (data.error && (!data.results || !data.results.length)) {
@@ -74,7 +74,7 @@
       return;
     }
     const items = results.map((hit, i) => `
-      <li class="untappd-result" data-idx="${i}">
+      <li class="web-search-result" data-idx="${i}">
         <div class="ur-thumb">${hit.thumbnail_url ? `<img src="${escapeAttr(hit.thumbnail_url)}" alt="">` : ''}</div>
         <div class="ur-main">
           <div class="ur-name">${escapeHTML(hit.beer_name || '(no name)')}</div>
@@ -91,8 +91,8 @@
 
     resultsBox.innerHTML = `
       <div class="ur-header">${results.length} result${results.length === 1 ? '' : 's'} found — pick one to autofill, or close and edit manually.</div>
-      <ul class="untappd-result-list">${items}</ul>
-      <button type="button" class="btn btn-secondary" data-untappd-close>None match — close</button>
+      <ul class="web-search-result-list">${items}</ul>
+      <button type="button" class="btn btn-secondary" data-web-search-close>None match — close</button>
     `;
     resultsBox.hidden = false;
     showStatus(status, '', '');
@@ -100,7 +100,7 @@
     resultsBox.querySelectorAll('[data-pick]').forEach(b =>
       b.addEventListener('click', () => applyResult(form, status, resultsBox, results[+b.dataset.pick]))
     );
-    resultsBox.querySelector('[data-untappd-close]')?.addEventListener('click', () => {
+    resultsBox.querySelector('[data-web-search-close]')?.addEventListener('click', () => {
       resultsBox.hidden = true;
       resultsBox.innerHTML = '';
     });
@@ -112,15 +112,15 @@
     resultsBox.hidden = true;
     resultsBox.innerHTML = '';
 
-    // Untappd-driven fields: always overwrite, clearing whatever was there.
+    // Search-driven fields: always overwrite, clearing whatever was there.
     // This prevents stale values (e.g. previous beer's location) lingering
-    // when Untappd has no data for the new pick.
+    // when the selected result has no data for the new pick.
     setField(form, 'brewery', hit.brewery);
     setField(form, 'beer_name', hit.beer_name);
     setField(form, 'sub_style', hit.sub_style);
     setField(form, 'abv', hit.abv);
     setField(form, 'ibu', hit.ibu);
-    setField(form, 'untappd_slug', hit.untappd_slug);
+    setField(form, 'source_slug', hit.source_slug);
     // Search results never include location; clear so detail fetch fills it.
     setField(form, 'location', '');
 
@@ -128,9 +128,9 @@
 
     // Detail fetch resolves location + downloads brewery logo, and may
     // refine ABV/IBU/sub_style with values from the beer page.
-    if (hit.untappd_slug) {
+    if (hit.source_slug) {
       try {
-        const r = await fetch('/admin/api/untappd/select?slug=' + encodeURIComponent(hit.untappd_slug));
+        const r = await fetch('/admin/api/web-search/select?slug=' + encodeURIComponent(hit.source_slug));
         const detail = await r.json();
         if (detail && !detail.error) {
           if (detail.brewery)   setField(form, 'brewery', detail.brewery);
@@ -153,7 +153,7 @@
   }
 
   function autoSelectCategoryFromSubstyle(form, substyle) {
-    // Always re-evaluate when an Untappd result is applied — the previous
+    // Always re-evaluate when a search result is applied — the previous
     // category may belong to the previous beer on this row.
     const driver = form.querySelector('[data-substyle-driver]');
     if (!driver || !substyle) return;
@@ -165,7 +165,7 @@
         return;
       }
     }
-    // Loose match — Untappd's sub-style strings often contain a clear keyword.
+    // Loose match — source sub-style strings often contain a clear keyword.
     // Order matters: more-specific keywords first, so "Belgian Strong Pale
     // Ale" wins Belgian over IPA, and "Lambic" wins Sour over its style hints.
     const guesses = [
@@ -191,7 +191,7 @@
   function showStatus(el, text, kind) {
     if (!el) return;
     el.textContent = text;
-    el.className = 'untappd-status' + (kind ? ' ' + kind : '');
+    el.className = 'web-search-status' + (kind ? ' ' + kind : '');
   }
 
   function escapeAttr(s) {

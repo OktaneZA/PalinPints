@@ -111,7 +111,7 @@ def save_tap(tap_number: int):
         "ibu": _to_int(f.get("ibu")),
         "location": (f.get("location") or "").strip() or None,
         "color_override": (f.get("color_override") or None) if f.get("use_color_override") else None,
-        "untappd_slug": f.get("untappd_slug") or None,
+        "untappd_slug": f.get("source_slug") or f.get("untappd_slug") or None,
     }
     for kind in PRICE_KINDS:
         values[f"price_{kind}"] = prices[kind]

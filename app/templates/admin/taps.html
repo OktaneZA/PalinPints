@@ -22,7 +22,7 @@
         <input type="checkbox" name="active" value="1" {% if tap.active %}checked{% endif %}>
         Active
       </label>
-      <button type="button" class="btn btn-secondary" data-untappd-search>Search the web</button>
+      <button type="button" class="btn btn-secondary" data-web-search>Search the web</button>
       <button type="submit" class="btn btn-primary">Save</button>
     </header>
 
@@ -96,14 +96,14 @@
         {% endif %}
       </label>
 
-      <input type="hidden" name="untappd_slug" value="{{ tap.untappd_slug or '' }}" data-field="untappd_slug">
+      <input type="hidden" name="source_slug" value="{{ tap.untappd_slug or '' }}" data-field="source_slug">
     </div>
 
     <div class="tap-card-footer">
-      <span class="untappd-status" data-untappd-status></span>
+      <span class="web-search-status" data-web-search-status></span>
     </div>
 
-    <div class="untappd-results" data-untappd-results hidden></div>
+    <div class="web-search-results" data-web-search-results hidden></div>
   </form>
 
   {% if tap.active or tap.beer_name %}

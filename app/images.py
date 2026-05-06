@@ -8,7 +8,7 @@ from PIL import Image
 from werkzeug.datastructures import FileStorage
 
 from . import UPLOADS_DIR
-from .untappd import get_cached_brewery_logo
+from .internetscraping import get_cached_brewery_logo
 
 ALLOWED_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 MAX_DIMENSION = 512
