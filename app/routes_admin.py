@@ -170,10 +170,10 @@ def settings():
 
         existing = get_settings()
 
-        # Display scale comes in as a percentage (50–300) for the user;
-        # we persist as a float multiplier (0.5–3.0).
+        # Display scale is a fine-tune multiplier on top of the auto-fit;
+        # comes in as a percentage (50–150) and persists as a float (0.5–1.5).
         scale_pct = _to_int(f.get("display_scale_pct")) or 100
-        display_scale = max(0.5, min(3.0, scale_pct / 100.0))
+        display_scale = max(0.5, min(1.5, scale_pct / 100.0))
 
         values = {
             "home_brewery": f.get("home_brewery") or "Palindrome Brewing Co",

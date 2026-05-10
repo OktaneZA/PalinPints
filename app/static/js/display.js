@@ -3,6 +3,18 @@
   const beersPerPage = parseInt(body.dataset.beersPerPage || '12', 10);
   const rotationMs = (parseInt(body.dataset.rotationInterval || '15', 10)) * 1000;
   const pollMs = 5000;
+  const STAGE_W = 1920, STAGE_H = 1080;
+  const stage = document.querySelector('.stage');
+
+  function rescale() {
+    if (!stage) return;
+    const userScale = parseFloat(body.dataset.displayScale || '1') || 1;
+    const fit = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    const scale = fit * userScale;
+    const tx = Math.max(0, (window.innerWidth - STAGE_W * scale) / 2);
+    const ty = Math.max(0, (window.innerHeight - STAGE_H * scale) / 2);
+    stage.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  }
 
   let currentVersion = body.dataset.version || '';
   let currentPage = 0;
@@ -54,6 +66,8 @@
     } catch (e) { /* offline; keep showing cached page */ }
   }
 
+  rescale();
+  window.addEventListener('resize', rescale);
   paginate();
   startRotation();
   tickClock();

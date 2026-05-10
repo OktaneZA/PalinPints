@@ -14,5 +14,4 @@ data/images/uploads/*
 !data/images/uploads/.gitkeep
 .idea/
 .vscode/
-.claude/
 *.log

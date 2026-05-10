@@ -1,10 +1,18 @@
 /* Structural baseline — themes override colors, fonts, decorations.
-   Designed for 1920x1080 horizontal. */
+   Designed for a 1920x1080 logical stage; JS scales the stage to fit any panel. */
 * { box-sizing: border-box; }
 html, body {
   margin: 0; padding: 0;
   width: 100vw; height: 100vh;
   overflow: hidden;
+}
+
+.stage {
+  width: 1920px;
+  height: 1080px;
+  position: relative;
+  overflow: hidden;
+  transform-origin: 0 0;
 }
 
 .display-header {
@@ -156,7 +164,7 @@ html, body {
 .events-panel .ev-qr img { width: 100%; height: 100%; display: block; }
 
 .display-footer {
-  position: fixed;
+  position: absolute;
   bottom: 12px;
   left: 0; right: 0;
   display: grid;

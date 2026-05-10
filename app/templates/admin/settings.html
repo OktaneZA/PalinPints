@@ -122,9 +122,9 @@
       <input type="number" name="page_rotation_interval" min="5" max="120" value="{{ settings.page_rotation_interval }}">
     </label>
     <label>Display scale (%)
-      <input type="number" name="display_scale_pct" min="50" max="300" step="5"
+      <input type="number" name="display_scale_pct" min="50" max="150" step="5"
              value="{{ ((settings.display_scale or 1.0) * 100) | round | int }}">
-      <span class="muted hint">100 = Full HD (1920×1080). Set 200 for a 4K panel; nudge between 70–130 if the layout doesn't quite fill a 1080p screen.</span>
+      <span class="muted hint">The display auto-fits any panel (1080p, 4K, etc.). 100% fills the screen; nudge down (e.g. 95) to leave a margin or up (e.g. 105) to slightly overflow.</span>
     </label>
   </fieldset>
 
