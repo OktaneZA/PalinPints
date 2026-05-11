@@ -11,6 +11,7 @@
     <div class="brand">PaliPints <span class="muted">admin</span></div>
     <nav>
       <a href="{{ url_for('admin.taps') }}" {% if request.endpoint == 'admin.taps' %}class="active"{% endif %}>Taps</a>
+      <a href="{{ url_for('admin.beer_library_page') }}" {% if request.endpoint == 'admin.beer_library_page' %}class="active"{% endif %}>Beer library</a>
       <a href="{{ url_for('admin.settings') }}" {% if request.endpoint == 'admin.settings' %}class="active"{% endif %}>Settings</a>
       <a href="{{ url_for('admin.specials') }}" {% if request.endpoint == 'admin.specials' %}class="active"{% endif %}>Specials</a>
       <a href="{{ url_for('admin.events') }}" {% if request.endpoint == 'admin.events' %}class="active"{% endif %}>Events</a>

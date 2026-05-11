@@ -37,6 +37,10 @@ def update_settings(values: dict[str, Any]) -> None:
         "beers_per_page", "page_rotation_interval",
         "color_ipa", "color_sour", "color_stout",
         "color_lager", "color_belgian", "color_specialty",
+        "external_db_source", "external_db_sync_interval_minutes",
+        "external_db_last_sync_at", "external_db_last_sync_status",
+        "tap_order_mode",
+        "holiday_fun_enabled",
     }
     fields = [(k, v) for k, v in values.items() if k in allowed]
     if not fields:
@@ -68,6 +72,7 @@ def update_tap(tap_number: int, values: dict[str, Any]) -> None:
         "price_third_enabled", "price_half_enabled",
         "price_pint_enabled", "price_takeaway_enabled",
         "color_override", "image_override_path", "untappd_slug",
+        "library_external_id",
     }
     fields = [(k, v) for k, v in values.items() if k in allowed]
     if not fields:
@@ -85,7 +90,8 @@ def clear_tap(tap_number: int) -> None:
            price_third=NULL, price_half=NULL, price_pint=NULL, price_takeaway=NULL,
            price_third_enabled=0, price_half_enabled=0,
            price_pint_enabled=0, price_takeaway_enabled=0,
-           color_override=NULL, image_override_path=NULL, untappd_slug=NULL
+           color_override=NULL, image_override_path=NULL, untappd_slug=NULL,
+           library_external_id=NULL
            WHERE tap_number = ?""",
         (tap_number,),
     )
@@ -207,6 +213,8 @@ def state_snapshot() -> dict[str, Any]:
                 "beers_per_page", "page_rotation_interval",
                 "color_ipa", "color_sour", "color_stout",
                 "color_lager", "color_belgian", "color_specialty",
+                "tap_order_mode",
+                "holiday_fun_enabled",
             )
         },
         "taps": enriched_taps,
@@ -216,3 +224,173 @@ def state_snapshot() -> dict[str, Any]:
     canonical = json.dumps(payload, sort_keys=True, default=str)
     payload["version_hash"] = hashlib.sha1(canonical.encode("utf-8")).hexdigest()[:12]
     return payload
+
+
+# ---- Beer library --------------------------------------------------------
+
+BEER_LIBRARY_EDITABLE_FIELDS = (
+    "beer_name", "brewery", "style_category", "sub_style",
+    "location", "description", "abv", "ibu",
+    "untappd_slug", "brewery_logo_url", "is_home_brewery",
+)
+
+_BEER_LIBRARY_SORT_COLS = {
+    "name": "beer_name COLLATE NOCASE",
+    "brewery": "brewery COLLATE NOCASE, beer_name COLLATE NOCASE",
+    "style": "style_category, sub_style, beer_name COLLATE NOCASE",
+    # `abv IS NULL` sorts NULLs last on every SQLite version (3.30 added
+    # NULLS LAST but we don't depend on it).
+    "abv": "abv IS NULL, abv DESC, beer_name COLLATE NOCASE",
+}
+
+
+def list_beer_library(
+    q: str | None = None,
+    sort: str = "name",
+    page: int = 1,
+    page_size: int = 50,
+    include_deleted: bool = False,
+) -> dict[str, Any]:
+    where = []
+    params: list[Any] = []
+    if not include_deleted:
+        where.append("deleted_in_source = 0")
+    if q:
+        where.append("(beer_name LIKE ? OR brewery LIKE ?)")
+        like = f"%{q}%"
+        params.extend([like, like])
+    sql_where = ("WHERE " + " AND ".join(where)) if where else ""
+    order = _BEER_LIBRARY_SORT_COLS.get(sort, _BEER_LIBRARY_SORT_COLS["name"])
+
+    page = max(1, page)
+    page_size = max(10, min(200, page_size))
+
+    total = get_db().execute(
+        f"SELECT COUNT(*) AS c FROM beer_library {sql_where}", params
+    ).fetchone()["c"]
+
+    rows = get_db().execute(
+        f"SELECT * FROM beer_library {sql_where} ORDER BY {order} "
+        f"LIMIT ? OFFSET ?",
+        params + [page_size, (page - 1) * page_size],
+    ).fetchall()
+
+    return {
+        "items": [dict(r) for r in rows],
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "pages": max(1, (total + page_size - 1) // page_size),
+    }
+
+
+def search_beer_library(q: str, limit: int = 20) -> list[dict[str, Any]]:
+    q = (q or "").strip()
+    if not q:
+        return []
+    like = f"%{q}%"
+    rows = get_db().execute(
+        "SELECT * FROM beer_library "
+        "WHERE deleted_in_source = 0 "
+        "AND (beer_name LIKE ? OR brewery LIKE ?) "
+        "ORDER BY "
+        "  CASE WHEN beer_name LIKE ? THEN 0 ELSE 1 END, "
+        "  brewery COLLATE NOCASE, beer_name COLLATE NOCASE "
+        "LIMIT ?",
+        (like, like, f"{q}%", max(1, min(50, limit))),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_beer(external_id: str) -> dict[str, Any] | None:
+    row = get_db().execute(
+        "SELECT * FROM beer_library WHERE external_id = ?", (external_id,)
+    ).fetchone()
+    return _row_to_dict(row)
+
+
+def update_beer_override(external_id: str, fields: dict[str, Any]) -> bool:
+    edits = [(k, v) for k, v in fields.items() if k in BEER_LIBRARY_EDITABLE_FIELDS]
+    if not edits:
+        return False
+    set_clause = ", ".join(f"{k} = ?" for k, _ in edits) + ", local_overridden = 1"
+    params = [v for _, v in edits] + [external_id]
+    cur = get_db().execute(
+        f"UPDATE beer_library SET {set_clause} WHERE external_id = ?", params
+    )
+    get_db().commit()
+    return cur.rowcount > 0
+
+
+def reset_beer_override(external_id: str) -> bool:
+    cur = get_db().execute(
+        "UPDATE beer_library SET local_overridden = 0 WHERE external_id = ?",
+        (external_id,),
+    )
+    get_db().commit()
+    return cur.rowcount > 0
+
+
+def upsert_beer_from_source(record: dict[str, Any], synced_at: int) -> str:
+    """Insert or update from external source. Returns 'added' | 'updated' | 'skipped'.
+
+    Skips when local_overridden=1 — user edits are preserved until reset.
+    Updates also clear the deleted_in_source flag (beer is back).
+    """
+    existing = get_beer(record["external_id"])
+    if existing and existing.get("local_overridden"):
+        return "skipped"
+
+    payload = {
+        "external_id": record["external_id"],
+        "beer_name": record.get("beer_name"),
+        "brewery": record.get("brewery"),
+        "style_category": record.get("style_category"),
+        "sub_style": record.get("sub_style"),
+        "location": record.get("location"),
+        "description": record.get("description"),
+        "abv": record.get("abv"),
+        "ibu": record.get("ibu"),
+        "is_home_brewery": 1 if record.get("is_home_brewery") else 0,
+        "untappd_slug": record.get("untappd_slug"),
+        "brewery_logo_url": record.get("brewery_logo_url"),
+        "external_updated_at": record.get("external_updated_at"),
+        "synced_at": synced_at,
+        "deleted_in_source": 0,
+    }
+    if existing:
+        cols = ", ".join(f"{k} = ?" for k in payload if k != "external_id")
+        params = [payload[k] for k in payload if k != "external_id"] + [record["external_id"]]
+        get_db().execute(
+            f"UPDATE beer_library SET {cols} WHERE external_id = ?", params
+        )
+        get_db().commit()
+        return "updated"
+    cols = ", ".join(payload.keys())
+    placeholders = ", ".join("?" for _ in payload)
+    get_db().execute(
+        f"INSERT INTO beer_library ({cols}) VALUES ({placeholders})",
+        list(payload.values()),
+    )
+    get_db().commit()
+    return "added"
+
+
+def mark_beers_deleted_in_source(present_external_ids: set[str]) -> int:
+    """Flag beers no longer in the source. Returns the number newly soft-deleted."""
+    if present_external_ids:
+        placeholders = ", ".join("?" * len(present_external_ids))
+        cur = get_db().execute(
+            f"UPDATE beer_library SET deleted_in_source = 1 "
+            f"WHERE deleted_in_source = 0 "
+            f"AND local_overridden = 0 "
+            f"AND external_id NOT IN ({placeholders})",
+            list(present_external_ids),
+        )
+    else:
+        cur = get_db().execute(
+            "UPDATE beer_library SET deleted_in_source = 1 "
+            "WHERE deleted_in_source = 0 AND local_overridden = 0"
+        )
+    get_db().commit()
+    return cur.rowcount

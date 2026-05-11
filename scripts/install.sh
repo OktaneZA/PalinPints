@@ -24,10 +24,25 @@ fi
 # 1. System deps (Pillow needs libjpeg/zlib; Chromium for kiosk)
 log "Installing apt packages (sudo required)..."
 sudo apt-get update
+
+# Pick whichever Chromium package is available on this Pi OS image.
+# 64-bit Raspberry Pi OS ships `chromium`; older 32-bit images use
+# `chromium-browser`. The kiosk launcher already handles either binary.
+if apt-cache show chromium >/dev/null 2>&1; then
+    CHROMIUM_PKG=chromium
+elif apt-cache show chromium-browser >/dev/null 2>&1; then
+    CHROMIUM_PKG=chromium-browser
+else
+    echo "Neither 'chromium' nor 'chromium-browser' is available via apt." >&2
+    echo "Run 'sudo apt-get update' and check your apt sources." >&2
+    exit 1
+fi
+log "Using Chromium package: $CHROMIUM_PKG"
+
 sudo apt-get install -y --no-install-recommends \
     python3 python3-venv python3-pip \
     libjpeg-dev zlib1g-dev \
-    chromium-browser xdotool unclutter \
+    "$CHROMIUM_PKG" xdotool unclutter \
     curl ca-certificates
 
 # 2. Python venv

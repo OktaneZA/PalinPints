@@ -33,6 +33,19 @@ body[data-theme="marble"] .brand-logo { opacity: 0.85; }
 body[data-theme="marble"] .beer-row {
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
+body[data-theme="marble"] .beer-row:has(+ .tap-separator) {
+  border-bottom: none;
+}
+body[data-theme="marble"] .tap-separator {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 44px;
+  letter-spacing: 4px;
+  color: #1a1a1a;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+  border-top: 2px solid rgba(0,0,0,0.1);
+  padding-top: 14px;
+}
 body[data-theme="marble"] .cat-tag {
   font-family: 'Inter', sans-serif;
   font-size: 15px;

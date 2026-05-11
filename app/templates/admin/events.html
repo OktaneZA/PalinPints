@@ -24,17 +24,37 @@
 {% if not events %}
   <p class="muted">No events yet.</p>
 {% endif %}
+
+{# Hidden per-row delete forms — siblings of the master form so they can be
+   triggered by buttons inside the rows via the `form` attribute. #}
 {% for e in events %}
-<form method="post" action="{{ url_for('admin.update_event_route', event_id=e.id) }}" class="special-form event-form special-row">
-  <label>Name <input type="text" name="name" value="{{ e.name }}" required></label>
-  <label>Date <input type="date" name="event_date" value="{{ e.event_date or '' }}"></label>
-  <label>Location <input type="text" name="location" value="{{ e.location or '' }}"></label>
-  <label>URL (for QR) <input type="url" name="url" value="{{ e.url or '' }}"></label>
-  <label class="active-toggle">
-    <input type="checkbox" name="active" value="1" {% if e.active %}checked{% endif %}> Active
-  </label>
-  <button type="submit" class="btn btn-secondary">Update</button>
-  <button type="submit" class="btn btn-danger" formaction="{{ url_for('admin.delete_event_route', event_id=e.id) }}" onclick="return confirm('Delete this event?');">Delete</button>
-</form>
+<form id="del-event-{{ e.id }}" method="post"
+      action="{{ url_for('admin.delete_event_route', event_id=e.id) }}"
+      style="display:none;"></form>
 {% endfor %}
+
+<form id="events-form" data-events-form>
+  {% for e in events %}
+  <div class="special-form event-form special-row" data-event-row data-id="{{ e.id }}">
+    <label>Name <input type="text" name="name" value="{{ e.name }}" required></label>
+    <label>Date <input type="date" name="event_date" value="{{ e.event_date or '' }}"></label>
+    <label>Location <input type="text" name="location" value="{{ e.location or '' }}"></label>
+    <label>URL (for QR) <input type="url" name="url" value="{{ e.url or '' }}"></label>
+    <label class="active-toggle">
+      <input type="checkbox" name="active" value="1" {% if e.active %}checked{% endif %}> Active
+    </label>
+    <button type="submit" class="btn btn-danger btn-sm"
+            form="del-event-{{ e.id }}"
+            onclick="return confirm('Delete this event?');">Delete</button>
+    <span class="row-status" data-row-status></span>
+  </div>
+  {% endfor %}
+</form>
+
+{% if events %}
+<div class="sticky-save-bar">
+  <button type="button" class="btn btn-primary" data-events-save-all>Save all events</button>
+  <span class="sticky-save-status" data-events-save-status></span>
+</div>
+{% endif %}
 {% endblock %}

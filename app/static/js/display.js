@@ -21,7 +21,7 @@
   let pageCount = 1;
   let rotateTimer = null;
 
-  const rows = () => Array.from(document.querySelectorAll('.beer-row'));
+  const rows = () => Array.from(document.querySelectorAll('.beer-row, .tap-separator'));
   const indicator = document.getElementById('pageIndicator');
   const clockNowEl = document.getElementById('clockNow');
 
@@ -36,11 +36,21 @@
 
   function paginate() {
     const all = rows();
-    pageCount = Math.max(1, Math.ceil(all.length / beersPerPage));
+    // Pack elements into pages, refusing to place a separator on the last
+    // slot of a page (push it to the next page so it never orphans).
+    const pageOf = new Map();
+    let page = 0, slot = 0;
+    for (const el of all) {
+      const isSep = el.classList.contains('tap-separator');
+      if (slot >= beersPerPage) { page++; slot = 0; }
+      if (isSep && slot === beersPerPage - 1) { page++; slot = 0; }
+      pageOf.set(el, page);
+      slot++;
+    }
+    pageCount = Math.max(1, page + 1);
     if (currentPage >= pageCount) currentPage = 0;
-    all.forEach((row, i) => {
-      const onThisPage = Math.floor(i / beersPerPage) === currentPage;
-      row.classList.toggle('is-hidden', !onThisPage);
+    all.forEach((el) => {
+      el.classList.toggle('is-hidden', pageOf.get(el) !== currentPage);
     });
     if (indicator) indicator.textContent = pageCount > 1 ? `${currentPage + 1} of ${pageCount}` : '';
   }

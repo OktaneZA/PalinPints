@@ -1,0 +1,178 @@
+{% extends "admin/_base.html" %}
+{% block title %}Beer library · PaliPints{% endblock %}
+{% block content %}
+<h1>Beer library</h1>
+<p class="hint">
+  Local mirror of the external beer database. Synced on startup and every
+  {{ settings.external_db_sync_interval_minutes }} minutes. Local edits override
+  the source until you reset the row.
+</p>
+
+<section class="bl-sync-card" data-bl-sync-card>
+  <div class="bl-sync-summary">
+    <div>
+      <div class="bl-sync-label">Source</div>
+      <div class="bl-sync-value">{{ settings.external_db_source }}</div>
+    </div>
+    <div>
+      <div class="bl-sync-label">Interval</div>
+      <div class="bl-sync-value">{{ settings.external_db_sync_interval_minutes }} min</div>
+    </div>
+    <div>
+      <div class="bl-sync-label">Last sync</div>
+      <div class="bl-sync-value" data-bl-last-sync>
+        {% if settings.external_db_last_sync_at %}
+          {{ settings.external_db_last_sync_at }}
+        {% else %}
+          never
+        {% endif %}
+      </div>
+    </div>
+    <div class="bl-sync-status-wrap">
+      <div class="bl-sync-label">Status</div>
+      <div class="bl-sync-value" data-bl-last-status>{{ settings.external_db_last_sync_status or '—' }}</div>
+    </div>
+  </div>
+</section>
+
+<form method="get" class="bl-filters">
+  <label>Search
+    <input type="search" name="q" value="{{ q }}" placeholder="beer or brewery name">
+  </label>
+  <label>Sort
+    <select name="sort">
+      <option value="name"    {% if sort == 'name'    %}selected{% endif %}>Beer name</option>
+      <option value="brewery" {% if sort == 'brewery' %}selected{% endif %}>Brewery</option>
+      <option value="style"   {% if sort == 'style'   %}selected{% endif %}>Style</option>
+      <option value="abv"     {% if sort == 'abv'     %}selected{% endif %}>ABV (high → low)</option>
+    </select>
+  </label>
+  <label>Page size
+    <select name="page_size">
+      {% for n in [25, 50, 100, 200] %}
+        <option value="{{ n }}" {% if page_size == n %}selected{% endif %}>{{ n }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn btn-secondary">Apply</button>
+  {% if q or sort != 'name' %}
+    <a class="btn btn-secondary" href="{{ url_for('admin.beer_library_page') }}">Clear</a>
+  {% endif %}
+</form>
+
+<p class="muted bl-meta">{{ total }} beer{{ '' if total == 1 else 's' }} · page {{ page }} of {{ pages }}</p>
+
+<table class="bl-table">
+  <thead>
+    <tr>
+      <th>Beer</th>
+      <th>Brewery</th>
+      <th>Style</th>
+      <th>ABV</th>
+      <th>IBU</th>
+      <th>Flags</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in items %}
+    <tr data-bl-row data-external-id="{{ b.external_id }}">
+      <td>
+        <div class="bl-name">{{ b.beer_name or '—' }}</div>
+        {% if b.description %}<div class="muted bl-desc">{{ b.description }}</div>{% endif %}
+      </td>
+      <td>{{ b.brewery or '—' }}{% if b.location %}<div class="muted bl-loc">{{ b.location }}</div>{% endif %}</td>
+      <td>{{ b.style_category or '—' }}{% if b.sub_style %}<div class="muted bl-sub">{{ b.sub_style }}</div>{% endif %}</td>
+      <td>{% if b.abv is not none %}{{ b.abv }}%{% endif %}</td>
+      <td>{% if b.ibu is not none %}{{ b.ibu }}{% endif %}</td>
+      <td class="bl-badges">
+        {% if b.is_home_brewery %}<span class="bl-badge bl-badge-home">Home</span>{% endif %}
+        {% if b.local_overridden %}<span class="bl-badge bl-badge-override">Local edit</span>{% endif %}
+        {% if b.deleted_in_source %}<span class="bl-badge bl-badge-deleted">Removed from source</span>{% endif %}
+      </td>
+      <td class="bl-actions">
+        <button type="button" class="btn btn-secondary btn-sm" data-bl-edit>Edit</button>
+        {% if b.local_overridden %}
+          <button type="button" class="btn btn-secondary btn-sm" data-bl-reset>Reset</button>
+        {% endif %}
+      </td>
+    </tr>
+    <tr class="bl-edit-row" hidden data-bl-edit-row>
+      <td colspan="7">
+        <form class="bl-edit-form" data-bl-edit-form>
+          <label>Beer name
+            <input type="text" name="beer_name" value="{{ b.beer_name or '' }}">
+          </label>
+          <label>Brewery
+            <input type="text" name="brewery" value="{{ b.brewery or '' }}">
+          </label>
+          <label>Style category
+            <select name="style_category">
+              <option value="">—</option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if b.style_category == cat %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>Sub-style
+            <input type="text" name="sub_style" value="{{ b.sub_style or '' }}">
+          </label>
+          <label>ABV %
+            <input type="number" step="0.1" name="abv" value="{{ b.abv if b.abv is not none else '' }}">
+          </label>
+          <label>IBU
+            <input type="number" step="1" name="ibu" value="{{ b.ibu if b.ibu is not none else '' }}">
+          </label>
+          <label>Location
+            <input type="text" name="location" value="{{ b.location or '' }}">
+          </label>
+          <label class="bl-edit-desc">Description
+            <textarea name="description" rows="2">{{ b.description or '' }}</textarea>
+          </label>
+          <label class="bl-edit-home">
+            <input type="checkbox" name="is_home_brewery" value="1" {% if b.is_home_brewery %}checked{% endif %}>
+            Home brewery beer
+          </label>
+          <div class="bl-edit-actions">
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+            <button type="button" class="btn btn-secondary btn-sm" data-bl-cancel>Cancel</button>
+            <span class="bl-edit-status" data-bl-edit-status></span>
+          </div>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" class="muted bl-empty">No beers — click <strong>Sync now</strong> above to populate the library from the external source.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if pages > 1 %}
+<nav class="bl-pagination">
+  {% set base_args = {'q': q, 'sort': sort, 'page_size': page_size} %}
+  {% if page > 1 %}
+    <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.beer_library_page', page=page - 1, **base_args) }}">← Prev</a>
+  {% endif %}
+  <span class="muted">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}
+    <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.beer_library_page', page=page + 1, **base_args) }}">Next →</a>
+  {% endif %}
+</nav>
+{% endif %}
+
+<div class="sticky-save-bar">
+  <button type="button" class="btn btn-primary" data-bl-sync-now>Sync now</button>
+  <span class="sticky-save-status" data-bl-sync-status>
+    {% if settings.external_db_last_sync_status %}
+      Last sync: {{ settings.external_db_last_sync_status }}
+    {% endif %}
+  </span>
+</div>
+
+<script>
+  window.PALIPINTS_BL_INITIAL = {
+    last_sync_at: {{ (settings.external_db_last_sync_at or 'null')|tojson }},
+    last_sync_status: {{ (settings.external_db_last_sync_status or '')|tojson }},
+  };
+</script>
+{% endblock %}

@@ -27,6 +27,17 @@ body[data-theme="palindrome2"] .brand-logo {
 body[data-theme="palindrome2"] .beer-row {
   border-bottom: 1px solid rgba(147, 187, 72, 0.18);
 }
+body[data-theme="palindrome2"] .beer-row:has(+ .tap-separator) {
+  border-bottom: none;
+}
+body[data-theme="palindrome2"] .tap-separator {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  letter-spacing: 8px;
+  color: #E9F1DA;
+  border-top: 3px solid #93BB48;
+  padding-top: 14px;
+}
 body[data-theme="palindrome2"] .cat-tag {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 17px;

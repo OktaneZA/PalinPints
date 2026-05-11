@@ -5,8 +5,10 @@ venv/
 .env
 data/palipints.db
 data/palipints.db-journal
+data/palipints.db.pre-restore
 data/palibeerview.db
 data/palibeerview.db-journal
+data/backups/
 data/.secret_key
 data/images/breweries/*
 data/images/uploads/*

@@ -37,6 +37,18 @@ body[data-theme="neon"] .brand-logo {
 body[data-theme="neon"] .beer-row {
   border-bottom: 1px solid rgba(248, 112, 193, 0.15);
 }
+body[data-theme="neon"] .beer-row:has(+ .tap-separator) {
+  border-bottom: none;
+}
+body[data-theme="neon"] .tap-separator {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  letter-spacing: 8px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(248, 112, 193, 0.6), 0 0 24px rgba(248, 112, 193, 0.3);
+  /* Neon's .display-header has no underline; match by omitting one here. */
+  padding-top: 14px;
+}
 body[data-theme="neon"] .cat-tag {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 17px;

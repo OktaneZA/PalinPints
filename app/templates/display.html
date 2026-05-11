@@ -20,7 +20,12 @@
   <div class="stage">
   <header class="display-header">
     <h1>DRAFT LIST</h1>
-    <img class="brand-logo" src="{{ url_for('static', filename='img/palindrome-logo.png') }}" onerror="this.style.display='none'" alt="">
+    <div class="brand-wrap">
+      <img class="brand-logo" src="{{ url_for('static', filename='img/palindrome-logo-full.svg') }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename='img/palindrome-logo.png') }}';" alt="">
+      {% if holiday %}
+        <img class="holiday-overlay" src="{{ url_for('static', filename='img/holidays/' + holiday + '.svg') }}" alt="">
+      {% endif %}
+    </div>
   </header>
 
   {# Determine which price columns to render based on whether any active
@@ -61,9 +66,12 @@
         </div>
       {% endif %}
       {% for cat, beers in grouped %}
+        {% if cat.startswith('__sep:') %}
+          <div class="tap-separator" data-category="__sep">{{ cat[6:] }}</div>
+        {% endif %}
         {% for tap in beers %}
           <article class="beer-row" data-category="{{ cat }}">
-            <div class="cat-tag">{{ cat }}</div>
+            <div class="cat-tag">{{ tap.style_category or '' }}</div>
             {% if settings.display_style == 'color' %}
               <div class="logo-slot color-disc" style="background: {{ tap.display_color }};"></div>
             {% else %}
@@ -106,9 +114,11 @@
         <ul>
           {% for s in specials %}
             <li>
-              <div class="s-title">{{ s.title }}</div>
+              <div class="s-row">
+                <div class="s-title">{{ s.title }}</div>
+                {% if s.price is not none %}<div class="s-price">£{{ '%.2f' % s.price }}</div>{% endif %}
+              </div>
               {% if s.description %}<div class="s-desc">{{ s.description }}</div>{% endif %}
-              {% if s.price is not none %}<div class="s-price">£{{ '%.2f' % s.price }}</div>{% endif %}
             </li>
           {% endfor %}
         </ul>

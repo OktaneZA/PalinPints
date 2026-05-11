@@ -19,16 +19,36 @@
 {% if not specials %}
   <p class="muted">No specials yet.</p>
 {% endif %}
+
+{# Hidden per-row delete forms — siblings of the master form so they can be
+   triggered by buttons inside the rows via the `form` attribute. #}
 {% for s in specials %}
-<form method="post" action="{{ url_for('admin.update_special_route', special_id=s.id) }}" class="special-form special-row">
-  <label>Title <input type="text" name="title" value="{{ s.title }}" required></label>
-  <label>Description <input type="text" name="description" value="{{ s.description or '' }}"></label>
-  <label>Price (£) <input type="number" step="0.05" name="price" value="{{ s.price if s.price is not none else '' }}"></label>
-  <label class="active-toggle">
-    <input type="checkbox" name="active" value="1" {% if s.active %}checked{% endif %}> Active
-  </label>
-  <button type="submit" class="btn btn-secondary">Update</button>
-  <button type="submit" class="btn btn-danger" formaction="{{ url_for('admin.delete_special_route', special_id=s.id) }}" onclick="return confirm('Delete this special?');">Delete</button>
-</form>
+<form id="del-special-{{ s.id }}" method="post"
+      action="{{ url_for('admin.delete_special_route', special_id=s.id) }}"
+      style="display:none;"></form>
 {% endfor %}
+
+<form id="specials-form" data-specials-form>
+  {% for s in specials %}
+  <div class="special-form special-row" data-special-row data-id="{{ s.id }}">
+    <label>Title <input type="text" name="title" value="{{ s.title }}" required></label>
+    <label>Description <input type="text" name="description" value="{{ s.description or '' }}"></label>
+    <label>Price (£) <input type="number" step="0.05" name="price" value="{{ s.price if s.price is not none else '' }}"></label>
+    <label class="active-toggle">
+      <input type="checkbox" name="active" value="1" {% if s.active %}checked{% endif %}> Active
+    </label>
+    <button type="submit" class="btn btn-danger btn-sm"
+            form="del-special-{{ s.id }}"
+            onclick="return confirm('Delete this special?');">Delete</button>
+    <span class="row-status" data-row-status></span>
+  </div>
+  {% endfor %}
+</form>
+
+{% if specials %}
+<div class="sticky-save-bar">
+  <button type="button" class="btn btn-primary" data-specials-save-all>Save all specials</button>
+  <span class="sticky-save-status" data-specials-save-status></span>
+</div>
+{% endif %}
 {% endblock %}

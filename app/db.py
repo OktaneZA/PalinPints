@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS settings (
     home_brewery_logo_path TEXT,
     display_style TEXT NOT NULL DEFAULT 'logo',
     display_scale REAL NOT NULL DEFAULT 1.0,
-    theme TEXT NOT NULL DEFAULT 'marble',
-    day_theme TEXT NOT NULL DEFAULT 'marble',
-    night_theme TEXT NOT NULL DEFAULT 'neon',
+    theme TEXT NOT NULL DEFAULT 'palindrome1',
+    day_theme TEXT NOT NULL DEFAULT 'palindrome1',
+    night_theme TEXT NOT NULL DEFAULT 'palindrome1',
     latitude REAL,
     longitude REAL,
     override_day_start TEXT,
@@ -32,7 +32,13 @@ CREATE TABLE IF NOT EXISTS settings (
     color_stout TEXT NOT NULL,
     color_lager TEXT NOT NULL,
     color_belgian TEXT NOT NULL,
-    color_specialty TEXT NOT NULL
+    color_specialty TEXT NOT NULL,
+    external_db_source TEXT NOT NULL DEFAULT 'mock',
+    external_db_sync_interval_minutes INTEGER NOT NULL DEFAULT 360,
+    external_db_last_sync_at INTEGER,
+    external_db_last_sync_status TEXT,
+    tap_order_mode TEXT NOT NULL DEFAULT 'style_category',
+    holiday_fun_enabled INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS taps (
@@ -55,8 +61,31 @@ CREATE TABLE IF NOT EXISTS taps (
     price_takeaway_enabled INTEGER NOT NULL DEFAULT 0,
     color_override TEXT,
     image_override_path TEXT,
-    untappd_slug TEXT
+    untappd_slug TEXT,
+    library_external_id TEXT
 );
+
+CREATE TABLE IF NOT EXISTS beer_library (
+    external_id TEXT PRIMARY KEY,
+    beer_name TEXT,
+    brewery TEXT,
+    style_category TEXT,
+    sub_style TEXT,
+    location TEXT,
+    description TEXT,
+    abv REAL,
+    ibu INTEGER,
+    is_home_brewery INTEGER NOT NULL DEFAULT 0,
+    untappd_slug TEXT,
+    brewery_logo_url TEXT,
+    external_updated_at INTEGER,
+    synced_at INTEGER,
+    local_overridden INTEGER NOT NULL DEFAULT 0,
+    deleted_in_source INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_beer_library_brewery ON beer_library(brewery COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_beer_library_beer_name ON beer_library(beer_name COLLATE NOCASE);
 
 CREATE TABLE IF NOT EXISTS specials (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -122,7 +151,7 @@ def init_db() -> None:
         # Add columns introduced after the original schema
         existing_cols = {c[1] for c in conn.execute("PRAGMA table_info(settings)").fetchall()}
         if "theme" not in existing_cols:
-            conn.execute("ALTER TABLE settings ADD COLUMN theme TEXT NOT NULL DEFAULT 'marble'")
+            conn.execute("ALTER TABLE settings ADD COLUMN theme TEXT NOT NULL DEFAULT 'palindrome1'")
 
         # Display scale for non-1080p TVs (1.0 = native, 2.0 = 4K panel).
         if "display_scale" not in existing_cols:
@@ -130,8 +159,8 @@ def init_db() -> None:
 
         # Day/night theme switch + sunset cache columns.
         sunset_cols = {
-            "day_theme": "TEXT NOT NULL DEFAULT 'marble'",
-            "night_theme": "TEXT NOT NULL DEFAULT 'neon'",
+            "day_theme": "TEXT NOT NULL DEFAULT 'palindrome1'",
+            "night_theme": "TEXT NOT NULL DEFAULT 'palindrome1'",
             "latitude": "REAL",
             "longitude": "REAL",
             "override_day_start": "TEXT",
@@ -172,6 +201,24 @@ def init_db() -> None:
                     conn.execute(
                         f"UPDATE taps SET {col} = 1 WHERE {price_col} IS NOT NULL"
                     )
+
+        # Link to the beer_library row a tap was populated from (informational —
+        # tap stays a snapshot, doesn't auto-refresh from library edits).
+        if "library_external_id" not in tap_cols:
+            conn.execute("ALTER TABLE taps ADD COLUMN library_external_id TEXT")
+
+        # External-DB sync settings + tap ordering mode.
+        external_db_cols = {
+            "external_db_source": "TEXT NOT NULL DEFAULT 'mock'",
+            "external_db_sync_interval_minutes": "INTEGER NOT NULL DEFAULT 360",
+            "external_db_last_sync_at": "INTEGER",
+            "external_db_last_sync_status": "TEXT",
+            "tap_order_mode": "TEXT NOT NULL DEFAULT 'style_category'",
+            "holiday_fun_enabled": "INTEGER NOT NULL DEFAULT 1",
+        }
+        for col, decl in external_db_cols.items():
+            if col not in existing_cols:
+                conn.execute(f"ALTER TABLE settings ADD COLUMN {col} {decl}")
 
         existing = conn.execute("SELECT id FROM settings WHERE id = 1").fetchone()
         if not existing:

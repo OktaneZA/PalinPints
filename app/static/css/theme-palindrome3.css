@@ -40,6 +40,14 @@ body[data-theme="palindrome3"] .beer-row {
   padding: 10px 18px;
   margin-bottom: 4px;
 }
+body[data-theme="palindrome3"] .tap-separator {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  letter-spacing: 8px;
+  color: #93BB48;
+  border-top: 4px solid #93BB48;
+  padding-top: 14px;
+}
 body[data-theme="palindrome3"] .cat-tag {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 17px;

@@ -180,6 +180,206 @@ h1 { margin-top: 0; }
 .clear-form { margin-top: 10px; }
 .thumb { height: 32px; width: 32px; object-fit: contain; vertical-align: middle; border: 1px solid var(--border); border-radius: 4px; padding: 2px; background: var(--card); }
 
+/* ===== Sticky save bar — reused by Taps & Settings pages ===== */
+.sticky-save-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  margin: 14px 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 5;
+}
+.sticky-save-bar .btn { font-size: 15px; padding: 8px 18px; }
+.sticky-save-status { font-size: 13px; color: var(--muted); }
+.sticky-save-status.error   { color: var(--danger); }
+.sticky-save-status.success { color: var(--success); }
+
+.tap-card.has-error { border-left-color: var(--danger); }
+.tap-row-status { font-size: 12px; color: var(--muted); margin-left: 10px; }
+.tap-row-status.error   { color: var(--danger); }
+.tap-row-status.success { color: var(--success); }
+
+.tap-lib-badge {
+  font-size: 11px; padding: 3px 8px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+/* The per-tap "image upload + clear" forms collapsed under <details>. */
+.tap-extras {
+  margin-top: 14px;
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.tap-extras > summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.tap-extras-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.tap-extras-card {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+}
+.tap-extras-card h3 { margin: 0 0 8px; font-size: 14px; }
+.tap-extras-card .btn-sm { padding: 4px 10px; font-size: 12px; }
+.tap-extras-image-form label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+
+/* ===== Local beer-library typeahead on the Beer name field ===== */
+.bl-typeahead-wrap { position: relative; }
+.bl-typeahead-dropdown {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  z-index: 20;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-top: 2px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+.bl-typeahead-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.bl-typeahead-item:last-child { border-bottom: none; }
+.bl-typeahead-item:hover,
+.bl-typeahead-item.is-active { background: var(--surface-soft); }
+.bl-typeahead-name { font-weight: 700; font-size: 14px; color: var(--fg); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bl-typeahead-meta {
+  margin-top: 3px;
+  display: flex; flex-wrap: wrap; gap: 10px;
+  font-size: 12px; color: var(--muted);
+}
+.bl-typeahead-empty { padding: 10px; font-size: 12px; color: var(--muted); }
+
+/* ===== Beer-library admin page ===== */
+.bl-sync-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0 16px;
+}
+.bl-sync-summary {
+  display: grid;
+  grid-template-columns: auto auto 1fr 2fr auto;
+  gap: 16px;
+  align-items: center;
+}
+.bl-sync-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.bl-sync-value { font-size: 14px; color: var(--fg); font-weight: 500; }
+.bl-sync-status-wrap .bl-sync-value { font-weight: 400; }
+.bl-sync-actions { text-align: right; }
+
+.bl-filters {
+  display: flex; gap: 14px; align-items: end; flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.bl-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.bl-filters input, .bl-filters select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--fg);
+  font-size: 14px;
+}
+.bl-meta { margin-top: 0; }
+
+.bl-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.bl-table th, .bl-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: top;
+}
+.bl-table th { background: var(--surface-soft); color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+.bl-table tr:last-child td { border-bottom: none; }
+.bl-name { font-weight: 700; }
+.bl-desc, .bl-sub, .bl-loc { font-size: 12px; margin-top: 2px; }
+.bl-empty { text-align: center; padding: 24px; }
+.bl-actions { white-space: nowrap; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+.bl-badges { white-space: nowrap; }
+.bl-badge {
+  display: inline-block;
+  font-size: 11px; padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  margin-right: 4px;
+}
+.bl-badge-home     { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
+.bl-badge-override { background: rgba(176, 106, 30, 0.12); color: var(--accent); border-color: var(--accent); }
+.bl-badge-deleted  { background: #f8dada; color: var(--danger); border-color: var(--danger); }
+
+.bl-edit-row td { background: var(--surface-soft); padding: 14px 18px; }
+.bl-edit-form {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px 14px;
+}
+.bl-edit-form label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 3px; }
+.bl-edit-form input, .bl-edit-form select, .bl-edit-form textarea {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--fg);
+  font-size: 14px;
+  font-family: inherit;
+}
+.bl-edit-desc { grid-column: span 2; }
+.bl-edit-home { grid-column: span 2; flex-direction: row; align-items: center; gap: 6px; color: var(--fg); }
+.bl-edit-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+.bl-edit-status { font-size: 12px; color: var(--muted); }
+.bl-edit-status.success { color: var(--success); }
+.bl-edit-status.error   { color: var(--danger); }
+
+.bl-pagination {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 12px;
+}
+
+/* ===== DB backup section in Settings ===== */
+.backup-actions {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 8px;
+}
+.backup-status { font-size: 13px; color: var(--muted); }
+.backup-status.success { color: var(--success); }
+.backup-status.error   { color: var(--danger); }
+
 /* Buttons */
 .btn {
   padding: 6px 14px; border-radius: 6px;
@@ -220,13 +420,18 @@ h1 { margin-top: 0; }
 .settings-form .row-pair label { margin-bottom: 0; }
 
 /* Specials */
-.special-form {
+.special-form,
+div.special-form {
   background: var(--card);
   border: 1px solid var(--border); border-radius: 8px;
   padding: 12px 16px; margin-bottom: 12px;
   display: grid; grid-template-columns: 2fr 3fr 1fr auto auto auto; gap: 10px;
   align-items: end;
 }
+.special-row.has-error { border-color: var(--danger); }
+.row-status { font-size: 12px; color: var(--muted); grid-column: 1 / -1; }
+.row-status.error { color: var(--danger); }
+.row-status.success { color: var(--success); }
 .special-form label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 3px; }
 .special-form input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--input-bg); color: var(--fg); }
 .special-form h2 { grid-column: 1 / -1; margin: 0; }

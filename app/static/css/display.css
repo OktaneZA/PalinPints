@@ -22,7 +22,20 @@ html, body {
   padding: 24px 48px 8px;
 }
 .display-header h1 { margin: 0; }
-.brand-logo { height: 72px; }
+.brand-wrap { position: relative; display: inline-block; }
+.brand-logo { height: 72px; display: block; }
+/* Seasonal Twemoji icon sat at 30° over the top-right of the brand logo. */
+.holiday-overlay {
+  position: absolute;
+  top: -28px;
+  right: -50px;
+  width: 60px;
+  height: 60px;
+  transform: rotate(30deg);
+  transform-origin: center center;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
+}
 
 .display-body {
   display: grid;
@@ -50,6 +63,16 @@ html, body {
 }
 .beer-row > .tap-num { text-align: center; }
 .beer-row.is-hidden { display: none; }
+
+/* "Guest Beers" separator row used when tap_order_mode is home_first.
+   Per-theme CSS sets font, color, and the top border (which mirrors the
+   theme's .display-header bottom border). */
+.tap-separator {
+  text-align: left;
+  padding: 14px 0 6px;
+  margin-top: 6px;
+}
+.tap-separator.is-hidden { display: none; }
 
 .cat-tag {
   text-align: right;
@@ -143,10 +166,18 @@ html, body {
 .specials-panel li { padding: 9px 0; }
 .specials-panel li:last-child,
 .events-panel li:last-child { border-bottom: none !important; }
+/* Title and price on a single row, price right-aligned. */
+.specials-panel .s-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.specials-panel .s-row .s-price { margin-top: 0; }
 
 .events-panel .event-item {
   display: grid;
-  grid-template-columns: 1fr 72px;
+  grid-template-columns: 1fr 103px;
   gap: 10px;
   align-items: center;
   padding: 9px 0;
@@ -155,7 +186,7 @@ html, body {
 .events-panel .ev-date,
 .events-panel .ev-location { font-size: 16px; opacity: 0.85; line-height: 1.3; }
 .events-panel .ev-qr {
-  width: 72px; height: 72px;
+  width: 103px; height: 103px;
   background: #fff;
   border-radius: 6px;
   padding: 4px;

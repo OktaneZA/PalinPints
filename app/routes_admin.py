@@ -15,6 +15,7 @@ from .models import (
     delete_special,
     get_settings,
     get_tap,
+    list_beer_library,
     list_events,
     list_specials,
     list_taps,
@@ -133,10 +134,127 @@ def clear(tap_number: int):
     return redirect(url_for("admin.taps"))
 
 
+def _validate_tap_payload(idx: int, raw: dict) -> tuple[dict | None, list[str]]:
+    """Build the update_tap() kwargs from one tap's JSON dict. Returns
+    (values, errors). When errors is non-empty, the row is rejected."""
+    errors: list[str] = []
+    active = 1 if raw.get("active") else 0
+    brewery = (raw.get("brewery") or "").strip() or None
+    beer_name = (raw.get("beer_name") or "").strip() or None
+    abv = _to_float(str(raw.get("abv")) if raw.get("abv") is not None else None)
+
+    prices: dict[str, float | None] = {}
+    enabled: dict[str, int] = {}
+    for kind in PRICE_KINDS:
+        prices[kind] = _to_float(
+            str(raw.get(f"price_{kind}")) if raw.get(f"price_{kind}") is not None else None
+        )
+        enabled[kind] = 1 if raw.get(f"price_{kind}_enabled") else 0
+    any_priced = any(enabled[k] and prices[k] is not None for k in PRICE_KINDS)
+
+    if active:
+        if not brewery: errors.append("brewery")
+        if not beer_name: errors.append("beer name")
+        if abv is None: errors.append("ABV %")
+        if not any_priced: errors.append("at least one enabled price")
+    if errors:
+        return None, errors
+
+    values: dict = {
+        "active": active,
+        "brewery": brewery,
+        "beer_name": beer_name,
+        "style_category": (raw.get("style_category") or None) or None,
+        "sub_style": (raw.get("sub_style") or "").strip() or None,
+        "abv": abv,
+        "ibu": _to_int(str(raw.get("ibu")) if raw.get("ibu") is not None else None),
+        "location": (raw.get("location") or "").strip() or None,
+        "color_override": (raw.get("color_override") or None) if raw.get("use_color_override") else None,
+        "untappd_slug": (raw.get("source_slug") or raw.get("untappd_slug") or None),
+        "library_external_id": (raw.get("library_external_id") or None),
+    }
+    for kind in PRICE_KINDS:
+        values[f"price_{kind}"] = prices[kind]
+        values[f"price_{kind}_enabled"] = enabled[kind]
+    return values, []
+
+
+@bp.route("/taps/save-all", methods=["POST"])
+def save_all_taps():
+    """Master save: accepts JSON ``{taps: [{tap_number, ...}, ...]}`` and
+    validates each tap independently. Valid taps are updated in one
+    request; rejected taps are returned so the client can highlight them."""
+    if not request.is_json:
+        return jsonify({"error": "expected JSON"}), 400
+    body = request.get_json(silent=True) or {}
+    submitted = body.get("taps") or []
+    if not isinstance(submitted, list):
+        return jsonify({"error": "taps must be a list"}), 400
+
+    saved: list[int] = []
+    rejected: list[dict] = []
+    for raw in submitted:
+        try:
+            tap_number = int(raw.get("tap_number"))
+        except (TypeError, ValueError):
+            rejected.append({"tap_number": raw.get("tap_number"), "errors": ["bad tap_number"]})
+            continue
+        if not get_tap(tap_number):
+            rejected.append({"tap_number": tap_number, "errors": ["unknown tap"]})
+            continue
+        values, errors = _validate_tap_payload(tap_number, raw)
+        if errors:
+            rejected.append({"tap_number": tap_number, "errors": errors})
+            continue
+        update_tap(tap_number, values)
+        saved.append(tap_number)
+
+    return jsonify({
+        "saved": saved,
+        "rejected": rejected,
+        "message": (
+            f"Saved {len(saved)} tap{'s' if len(saved) != 1 else ''}"
+            + (f"; {len(rejected)} not saved" if rejected else "")
+            + "."
+        ),
+    })
+
+
+_TAP_ORDER_MODES = {"tap_number", "style_category", "home_first"}
+_EXTERNAL_DB_SOURCES = {"mock", "postgres"}
+
 _ALLOWED_THEMES = {"marble", "neon", "chalkboard", "palindrome1", "palindrome2", "palindrome3"}
 
 
-def _normalise_theme(value: str | None, fallback: str = "marble") -> str:
+@bp.route("/beer-library", methods=["GET"])
+def beer_library_page():
+    q = (request.args.get("q") or "").strip() or None
+    sort = request.args.get("sort") or "name"
+    try:
+        page = max(1, int(request.args.get("page") or 1))
+    except ValueError:
+        page = 1
+    try:
+        page_size = int(request.args.get("page_size") or 50)
+    except ValueError:
+        page_size = 50
+
+    result = list_beer_library(q=q, sort=sort, page=page, page_size=page_size)
+    return render_template(
+        "admin/beer_library.html",
+        settings=get_settings(),
+        items=result["items"],
+        page=result["page"],
+        pages=result["pages"],
+        page_size=result["page_size"],
+        total=result["total"],
+        q=q or "",
+        sort=sort,
+        categories=STYLE_CATEGORIES,
+    )
+
+
+def _normalise_theme(value: str | None, fallback: str = "palindrome1") -> str:
     return value if value in _ALLOWED_THEMES else fallback
 
 
@@ -161,7 +279,7 @@ def settings():
     if request.method == "POST":
         f = request.form
         day_theme = _normalise_theme(f.get("day_theme"))
-        night_theme = _normalise_theme(f.get("night_theme"), fallback="neon")
+        night_theme = _normalise_theme(f.get("night_theme"))
 
         lat = _to_float(f.get("latitude"))
         lon = _to_float(f.get("longitude"))
@@ -174,6 +292,13 @@ def settings():
         # comes in as a percentage (50–150) and persists as a float (0.5–1.5).
         scale_pct = _to_int(f.get("display_scale_pct")) or 100
         display_scale = max(0.5, min(1.5, scale_pct / 100.0))
+
+        tap_order = f.get("tap_order_mode")
+        if tap_order not in _TAP_ORDER_MODES:
+            tap_order = "style_category"
+        external_source = f.get("external_db_source")
+        if external_source not in _EXTERNAL_DB_SOURCES:
+            external_source = "mock"
 
         values = {
             "home_brewery": f.get("home_brewery") or "Palindrome Brewing Co",
@@ -196,6 +321,12 @@ def settings():
             "color_lager": f.get("color_lager"),
             "color_belgian": f.get("color_belgian"),
             "color_specialty": f.get("color_specialty"),
+            "tap_order_mode": tap_order,
+            "external_db_source": external_source,
+            "external_db_sync_interval_minutes": max(
+                15, min(1440, _to_int(f.get("external_db_sync_interval_minutes")) or 360)
+            ),
+            "holiday_fun_enabled": 1 if f.get("holiday_fun_enabled") else 0,
         }
         # Force a fresh sunset lookup on the next state poll if the user
         # changed the coordinates. Saves them having to wait a week.
@@ -210,7 +341,13 @@ def settings():
         flash("Settings saved.", "success")
         return redirect(url_for("admin.settings"))
 
-    return render_template("admin/settings.html", settings=get_settings(), categories=STYLE_CATEGORIES)
+    from .backup import backup_info
+    return render_template(
+        "admin/settings.html",
+        settings=get_settings(),
+        categories=STYLE_CATEGORIES,
+        backup=backup_info(),
+    )
 
 
 @bp.route("/api/geolocate", methods=["GET"])
@@ -253,6 +390,40 @@ def delete_special_route(special_id: int):
     delete_special(special_id)
     flash("Special deleted.", "success")
     return redirect(url_for("admin.specials"))
+
+
+@bp.route("/specials/save-all", methods=["POST"])
+def save_all_specials():
+    if not request.is_json:
+        return jsonify({"error": "expected JSON"}), 400
+    items = (request.get_json(silent=True) or {}).get("specials") or []
+    saved: list[int] = []
+    rejected: list[dict] = []
+    for raw in items:
+        try:
+            sid = int(raw.get("id"))
+        except (TypeError, ValueError):
+            rejected.append({"id": raw.get("id"), "errors": ["bad id"]})
+            continue
+        title = (raw.get("title") or "").strip()
+        if not title:
+            rejected.append({"id": sid, "errors": ["title required"]})
+            continue
+        description = (raw.get("description") or "").strip() or None
+        raw_price = raw.get("price")
+        price = _to_float(str(raw_price) if raw_price not in (None, "") else None)
+        active = 1 if raw.get("active") else 0
+        update_special(sid, title, description, price, active)
+        saved.append(sid)
+    return jsonify({
+        "saved": saved,
+        "rejected": rejected,
+        "message": (
+            f"Saved {len(saved)} special{'s' if len(saved) != 1 else ''}"
+            + (f"; {len(rejected)} not saved" if rejected else "")
+            + "."
+        ),
+    })
 
 
 @bp.route("/events", methods=["GET", "POST"])
@@ -298,3 +469,37 @@ def delete_event_route(event_id: int):
     delete_event(event_id)
     flash("Event deleted.", "success")
     return redirect(url_for("admin.events"))
+
+
+@bp.route("/events/save-all", methods=["POST"])
+def save_all_events():
+    if not request.is_json:
+        return jsonify({"error": "expected JSON"}), 400
+    items = (request.get_json(silent=True) or {}).get("events") or []
+    saved: list[int] = []
+    rejected: list[dict] = []
+    for raw in items:
+        try:
+            eid = int(raw.get("id"))
+        except (TypeError, ValueError):
+            rejected.append({"id": raw.get("id"), "errors": ["bad id"]})
+            continue
+        name = (raw.get("name") or "").strip()
+        if not name:
+            rejected.append({"id": eid, "errors": ["name required"]})
+            continue
+        event_date = (raw.get("event_date") or "").strip() or None
+        location = (raw.get("location") or "").strip() or None
+        url_field = (raw.get("url") or "").strip() or None
+        active = 1 if raw.get("active") else 0
+        update_event(eid, name, event_date, location, url_field, active)
+        saved.append(eid)
+    return jsonify({
+        "saved": saved,
+        "rejected": rejected,
+        "message": (
+            f"Saved {len(saved)} event{'s' if len(saved) != 1 else ''}"
+            + (f"; {len(rejected)} not saved" if rejected else "")
+            + "."
+        ),
+    })

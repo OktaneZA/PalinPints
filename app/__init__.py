@@ -143,6 +143,9 @@ def create_app() -> Flask:
         try:
             return {"active_theme": effective_theme(get_settings())}
         except Exception:
-            return {"active_theme": "marble"}
+            return {"active_theme": "palindrome1"}
+
+    from .sync_worker import start_sync_worker
+    start_sync_worker(app)
 
     return app

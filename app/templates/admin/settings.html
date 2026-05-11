@@ -138,7 +138,95 @@
     <label>Historical & Specialty<input type="color" name="color_specialty" value="{{ settings.color_specialty }}"></label>
   </fieldset>
 
-  <button type="submit" class="btn btn-primary">Save settings</button>
+  <fieldset>
+    <legend>Holiday fun</legend>
+    <p class="hint">
+      Show a festive icon in the top-right of the display around major holidays
+      (Christmas, Easter, Halloween, St Patrick's, New Year's, 4th July, April
+      Fools, Thanksgiving, Valentine's). Icons are
+      <a href="https://twemoji.twitter.com/" target="_blank" rel="noopener">Twemoji</a>
+      (CC BY 4.0).
+    </p>
+    <label class="radio">
+      <input type="checkbox" name="holiday_fun_enabled" value="1"
+             {% if settings.holiday_fun_enabled %}checked{% endif %}>
+      Show holiday icons on the display
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Tap list ordering</legend>
+    <p class="hint">How the active taps are ordered on the TV display.</p>
+    <label class="radio">
+      <input type="radio" name="tap_order_mode" value="tap_number"
+             {% if settings.tap_order_mode == 'tap_number' %}checked{% endif %}>
+      By tap number (1, 2, 3, …)
+    </label>
+    <label class="radio">
+      <input type="radio" name="tap_order_mode" value="style_category"
+             {% if (settings.tap_order_mode or 'style_category') == 'style_category' %}checked{% endif %}>
+      Group by style category (default)
+    </label>
+    <label class="radio">
+      <input type="radio" name="tap_order_mode" value="home_first"
+             {% if settings.tap_order_mode == 'home_first' %}checked{% endif %}>
+      Home brewery first, then a “Guest Beers” separator, then guests
+    </label>
+  </fieldset>
+
+  <fieldset>
+    <legend>External beer database</legend>
+    <p class="hint">
+      The Beer library is mirrored from an external source so the kiosk works offline.
+      Manage the library on the <a href="{{ url_for('admin.beer_library_page') }}">Beer library</a> page.
+    </p>
+    <label>Source
+      <select name="external_db_source">
+        <option value="mock"     {% if (settings.external_db_source or 'mock') == 'mock' %}selected{% endif %}>Mock (data/mock_beer_source.json)</option>
+        <option value="postgres" {% if settings.external_db_source == 'postgres' %}selected{% endif %} disabled>Postgres (not yet configured)</option>
+      </select>
+    </label>
+    <label>Sync interval (minutes)
+      <input type="number" name="external_db_sync_interval_minutes" min="15" max="1440" step="5"
+             value="{{ settings.external_db_sync_interval_minutes or 360 }}">
+      <span class="muted hint">15 minutes – 24 hours. Default 360 (every 6 hours). Sync also runs at app startup.</span>
+    </label>
+    <p class="muted">
+      Last sync: <strong>{% if settings.external_db_last_sync_at %}{{ settings.external_db_last_sync_at }}{% else %}never{% endif %}</strong>
+      — {{ settings.external_db_last_sync_status or 'no status yet' }}
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Database backup</legend>
+    <p class="hint">
+      A copy of the database is saved automatically every 7 days to
+      <code>data/backups/palipints.db.backup</code>. The most recent backup is
+      kept (a new backup overwrites the previous one). Restoring will replace
+      <strong>all</strong> taps, settings, library, specials, events with the
+      backup contents.
+    </p>
+    <p class="muted">
+      {% if backup.exists %}
+        Last backup: <strong data-backup-modified>{{ backup.modified_at }}</strong>
+        · <span data-backup-size>{{ backup.size_bytes }}</span> bytes
+      {% else %}
+        <span data-backup-modified>No backup yet.</span>
+      {% endif %}
+    </p>
+    <div class="backup-actions">
+      <button type="button" class="btn btn-secondary" data-backup-now>Back up now</button>
+      <button type="button" class="btn btn-danger" data-backup-restore
+              {% if not backup.exists %}disabled{% endif %}>
+        Restore from backup
+      </button>
+      <span class="backup-status" data-backup-status></span>
+    </div>
+  </fieldset>
+
+  <div class="sticky-save-bar">
+    <button type="submit" class="btn btn-primary">Save settings</button>
+  </div>
 </form>
 
 <script>

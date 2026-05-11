@@ -6,6 +6,8 @@
   Home brewery: <strong>{{ settings.home_brewery }}</strong> — pre-fills the brewery on new taps.
   <br>
   Required when active: brewery, beer name, ABV %, and at least one enabled price. Other fields optional.
+  <br>
+  Start typing in the <em>Beer name</em> field to autocomplete from the local Beer library.
 </p>
 
 <datalist id="brewery-list"></datalist>
@@ -13,9 +15,9 @@
 {# Substyle data is embedded for JS; one datalist per row gets repopulated when category changes. #}
 <script id="substyle-data" type="application/json">{{ substyles|tojson }}</script>
 
+<form id="taps-form" data-taps-form>
 {% for tap in taps %}
-<section class="tap-card {% if tap.active %}is-active{% endif %}" data-tap="{{ tap.tap_number }}">
-  <form method="post" action="{{ url_for('admin.save_tap', tap_number=tap.tap_number) }}" enctype="multipart/form-data" data-tap-form>
+<section class="tap-card {% if tap.active %}is-active{% endif %}" data-tap="{{ tap.tap_number }}" data-tap-block>
     <header class="tap-card-header">
       <span class="tap-num">#{{ tap.tap_number }}</span>
       <label class="active-toggle">
@@ -23,7 +25,9 @@
         Active
       </label>
       <button type="button" class="btn btn-secondary" data-web-search>Search the web</button>
-      <button type="submit" class="btn btn-primary">Save</button>
+      {% if tap.library_external_id %}
+        <span class="tap-lib-badge" title="Populated from the Beer library">📚 from library</span>
+      {% endif %}
     </header>
 
     <div class="tap-grid">
@@ -32,8 +36,10 @@
                value="{{ tap.brewery or settings.home_brewery }}"
                data-field="brewery" autocomplete="off">
       </label>
-      <label>Beer name <span class="req">*</span>
-        <input type="text" name="beer_name" value="{{ tap.beer_name or '' }}" data-field="beer_name">
+      <label class="bl-typeahead-wrap">Beer name <span class="req">*</span>
+        <input type="text" name="beer_name" value="{{ tap.beer_name or '' }}"
+               data-field="beer_name" data-bl-typeahead autocomplete="off">
+        <div class="bl-typeahead-dropdown" data-bl-typeahead-dropdown hidden></div>
       </label>
       <label>Style category
         <select name="style_category" data-field="style_category" data-substyle-driver>
@@ -86,31 +92,70 @@
         <input type="color" name="color_override" value="{{ tap.color_override or '#888888' }}">
       </label>
 
-      <label>Image override
-        <input type="file" name="image" accept="image/*">
-        {% if tap.image_override_path %}
-          <span class="muted">current:
-            <img src="{{ url_for('serve_data_image', relpath=tap.image_override_path) }}" class="thumb" alt="">
-            <label class="inline"><input type="checkbox" name="clear_image" value="1"> remove</label>
-          </span>
-        {% endif %}
-      </label>
-
       <input type="hidden" name="source_slug" value="{{ tap.untappd_slug or '' }}" data-field="source_slug">
+      <input type="hidden" name="library_external_id" value="{{ tap.library_external_id or '' }}" data-field="library_external_id">
     </div>
 
     <div class="tap-card-footer">
       <span class="web-search-status" data-web-search-status></span>
+      <span class="tap-row-status" data-tap-row-status></span>
     </div>
 
     <div class="web-search-results" data-web-search-results hidden></div>
-  </form>
-
-  {% if tap.active or tap.beer_name %}
-  <form method="post" action="{{ url_for('admin.clear', tap_number=tap.tap_number) }}" class="clear-form" onsubmit="return confirm('Clear tap #{{ tap.tap_number }}?');">
-    <button type="submit" class="btn btn-danger">Clear tap</button>
-  </form>
-  {% endif %}
 </section>
 {% endfor %}
+</form>
+
+<div class="sticky-save-bar">
+  <button type="button" class="btn btn-primary" data-taps-save-all>Save all taps</button>
+  <span class="sticky-save-status" data-taps-save-status></span>
+</div>
+
+{# Per-tap forms for image upload + clear, kept separate from the master save
+   so file uploads don't bloat the JSON save and so the "Clear tap" action
+   has its own confirmation flow. #}
+<details class="tap-extras">
+  <summary>Per-tap image uploads &amp; clear actions</summary>
+  <div class="tap-extras-grid">
+    {% for tap in taps %}
+      <section class="tap-extras-card">
+        <h3>#{{ tap.tap_number }} {{ tap.beer_name or '(empty)' }}</h3>
+        <form method="post" action="{{ url_for('admin.save_tap', tap_number=tap.tap_number) }}" enctype="multipart/form-data" class="tap-extras-image-form">
+          {# Resubmit current text values so the per-tap POST validator
+             doesn't blank them. Only the image input is the new change. #}
+          <input type="hidden" name="active"        value="{{ '1' if tap.active else '' }}">
+          <input type="hidden" name="brewery"       value="{{ tap.brewery or '' }}">
+          <input type="hidden" name="beer_name"     value="{{ tap.beer_name or '' }}">
+          <input type="hidden" name="style_category" value="{{ tap.style_category or '' }}">
+          <input type="hidden" name="sub_style"     value="{{ tap.sub_style or '' }}">
+          <input type="hidden" name="abv"           value="{{ tap.abv if tap.abv is not none else '' }}">
+          <input type="hidden" name="ibu"           value="{{ tap.ibu if tap.ibu is not none else '' }}">
+          <input type="hidden" name="location"      value="{{ tap.location or '' }}">
+          {% for kind in ['third', 'half', 'pint', 'takeaway'] %}
+            <input type="hidden" name="price_{{ kind }}" value="{{ tap['price_' ~ kind] if tap['price_' ~ kind] is not none else '' }}">
+            {% if tap['price_' ~ kind ~ '_enabled'] %}<input type="hidden" name="price_{{ kind }}_enabled" value="1">{% endif %}
+          {% endfor %}
+          <input type="hidden" name="source_slug" value="{{ tap.untappd_slug or '' }}">
+
+          <label>Image override
+            <input type="file" name="image" accept="image/*">
+          </label>
+          {% if tap.image_override_path %}
+            <div class="muted">current:
+              <img src="{{ url_for('serve_data_image', relpath=tap.image_override_path) }}" class="thumb" alt="">
+              <label class="inline"><input type="checkbox" name="clear_image" value="1"> remove</label>
+            </div>
+          {% endif %}
+          <button type="submit" class="btn btn-secondary btn-sm">Upload</button>
+        </form>
+
+        {% if tap.active or tap.beer_name %}
+        <form method="post" action="{{ url_for('admin.clear', tap_number=tap.tap_number) }}" class="clear-form" onsubmit="return confirm('Clear tap #{{ tap.tap_number }}?');">
+          <button type="submit" class="btn btn-danger btn-sm">Clear tap</button>
+        </form>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
+</details>
 {% endblock %}

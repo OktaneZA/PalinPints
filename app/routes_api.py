@@ -5,8 +5,18 @@ from dataclasses import asdict
 
 from flask import Blueprint, jsonify, request
 
-from .db import get_db
+from .backup import backup_info, backup_now, restore_from_backup
+from .db import close_db, get_db
 from .internetscraping import download_brewery_logo, fetch_beer_detail, search_beers
+from .models import (
+    BEER_LIBRARY_EDITABLE_FIELDS,
+    get_beer,
+    get_settings,
+    reset_beer_override,
+    search_beer_library,
+    update_beer_override,
+)
+from .sync_worker import trigger_sync
 
 bp = Blueprint("api", __name__, url_prefix="/admin/api")
 
@@ -63,3 +73,103 @@ def web_select():
         if rel:
             payload["brewery_logo_local_url"] = f"/data-image/{rel}"
     return jsonify(payload)
+
+
+# ---- Beer library --------------------------------------------------------
+
+@bp.route("/beer-library/search")
+def beer_library_search():
+    """Autocomplete endpoint for the tap form. Returns full beer records so
+    the client can populate every field without a second roundtrip."""
+    q = (request.args.get("q") or "").strip()
+    try:
+        limit = max(1, min(50, int(request.args.get("limit") or 20)))
+    except ValueError:
+        limit = 20
+    return jsonify({"query": q, "results": search_beer_library(q, limit=limit)})
+
+
+@bp.route("/beer-library/<external_id>/edit", methods=["POST"])
+def beer_library_edit(external_id: str):
+    if not get_beer(external_id):
+        return jsonify({"error": "not found"}), 404
+    body = request.get_json(silent=True) or {}
+    fields = {k: v for k, v in body.items() if k in BEER_LIBRARY_EDITABLE_FIELDS}
+    if not fields:
+        return jsonify({"error": "no editable fields supplied"}), 400
+    if "abv" in fields and fields["abv"] not in (None, ""):
+        try: fields["abv"] = float(fields["abv"])
+        except (TypeError, ValueError): fields["abv"] = None
+    if "ibu" in fields and fields["ibu"] not in (None, ""):
+        try: fields["ibu"] = int(float(fields["ibu"]))
+        except (TypeError, ValueError): fields["ibu"] = None
+    if "is_home_brewery" in fields:
+        fields["is_home_brewery"] = 1 if fields["is_home_brewery"] else 0
+    update_beer_override(external_id, fields)
+    return jsonify({"ok": True, "beer": get_beer(external_id)})
+
+
+@bp.route("/beer-library/<external_id>/reset", methods=["POST"])
+def beer_library_reset(external_id: str):
+    if not get_beer(external_id):
+        return jsonify({"error": "not found"}), 404
+    reset_beer_override(external_id)
+    # Wake the worker — next sync pass restores this row from the source.
+    trigger_sync()
+    return jsonify({"ok": True})
+
+
+@bp.route("/beer-library/sync", methods=["POST"])
+def beer_library_sync_now():
+    trigger_sync()
+    settings = get_settings()
+    return jsonify({
+        "queued": True,
+        "last_sync_at": settings.get("external_db_last_sync_at"),
+        "last_sync_status": settings.get("external_db_last_sync_status"),
+    })
+
+
+@bp.route("/beer-library/status")
+def beer_library_status():
+    settings = get_settings()
+    return jsonify({
+        "last_sync_at": settings.get("external_db_last_sync_at"),
+        "last_sync_status": settings.get("external_db_last_sync_status"),
+        "source": settings.get("external_db_source"),
+        "interval_minutes": settings.get("external_db_sync_interval_minutes"),
+    })
+
+
+# ---- DB backup / restore -------------------------------------------------
+
+@bp.route("/backup/status")
+def backup_status():
+    return jsonify(backup_info())
+
+
+@bp.route("/backup/now", methods=["POST"])
+def backup_run_now():
+    """Take an immediate backup. Used by the admin "Back up now" button."""
+    result = backup_now()
+    return (jsonify(result), 200 if result.get("ok") else 500)
+
+
+@bp.route("/backup/restore", methods=["POST"])
+def backup_restore():
+    """Restore the live DB from the rolling backup. Requires the caller to
+    pass ``{"confirm": "RESTORE"}`` in the JSON body — double-confirmation
+    is enforced at the UI layer; this is the server-side safety net."""
+    body = request.get_json(silent=True) or {}
+    if (body.get("confirm") or "").strip().upper() != "RESTORE":
+        return jsonify({
+            "error": "missing or invalid confirmation",
+            "hint": 'send {"confirm": "RESTORE"} in the request body',
+        }), 400
+
+    # Drop the per-request DB connection before swapping the file. Next
+    # request will reopen against the restored DB.
+    close_db()
+
+    result = restore_from_backup()
+    return (jsonify(result), 200 if result.get("ok") else 500)
