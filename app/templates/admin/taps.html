@@ -120,23 +120,7 @@
     {% for tap in taps %}
       <section class="tap-extras-card">
         <h3>#{{ tap.tap_number }} {{ tap.beer_name or '(empty)' }}</h3>
-        <form method="post" action="{{ url_for('admin.save_tap', tap_number=tap.tap_number) }}" enctype="multipart/form-data" class="tap-extras-image-form">
-          {# Resubmit current text values so the per-tap POST validator
-             doesn't blank them. Only the image input is the new change. #}
-          <input type="hidden" name="active"        value="{{ '1' if tap.active else '' }}">
-          <input type="hidden" name="brewery"       value="{{ tap.brewery or '' }}">
-          <input type="hidden" name="beer_name"     value="{{ tap.beer_name or '' }}">
-          <input type="hidden" name="style_category" value="{{ tap.style_category or '' }}">
-          <input type="hidden" name="sub_style"     value="{{ tap.sub_style or '' }}">
-          <input type="hidden" name="abv"           value="{{ tap.abv if tap.abv is not none else '' }}">
-          <input type="hidden" name="ibu"           value="{{ tap.ibu if tap.ibu is not none else '' }}">
-          <input type="hidden" name="location"      value="{{ tap.location or '' }}">
-          {% for kind in ['third', 'half', 'pint', 'takeaway'] %}
-            <input type="hidden" name="price_{{ kind }}" value="{{ tap['price_' ~ kind] if tap['price_' ~ kind] is not none else '' }}">
-            {% if tap['price_' ~ kind ~ '_enabled'] %}<input type="hidden" name="price_{{ kind }}_enabled" value="1">{% endif %}
-          {% endfor %}
-          <input type="hidden" name="source_slug" value="{{ tap.untappd_slug or '' }}">
-
+        <form method="post" action="{{ url_for('admin.save_tap_image', tap_number=tap.tap_number) }}" enctype="multipart/form-data" class="tap-extras-image-form">
           <label>Image override
             <input type="file" name="image" accept="image/*">
           </label>

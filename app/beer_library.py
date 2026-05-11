@@ -186,17 +186,23 @@ def _do_sync(force: bool = False) -> SyncResult:
         return result
 
     present_ids: set[str] = set()
-    for rec in records:
-        present_ids.add(rec.external_id)
-        outcome = upsert_beer_from_source(asdict(rec), result.ran_at)
-        if outcome == "added":
-            result.added += 1
-        elif outcome == "updated":
-            result.updated += 1
-        elif outcome == "skipped":
-            result.skipped_overridden += 1
+    try:
+        for rec in records:
+            present_ids.add(rec.external_id)
+            outcome = upsert_beer_from_source(asdict(rec), result.ran_at)
+            if outcome == "added":
+                result.added += 1
+            elif outcome == "updated":
+                result.updated += 1
+            elif outcome == "skipped":
+                result.skipped_overridden += 1
 
-    result.soft_deleted = mark_beers_deleted_in_source(present_ids)
+        result.soft_deleted = mark_beers_deleted_in_source(present_ids)
+    except Exception as e:  # noqa: BLE001 — never let sync crash the app
+        result.status = f"error: {type(e).__name__}: {e}"
+        _persist_status(result)
+        return result
+
     result.status = (
         f"ok: {result.added} added, {result.updated} updated, "
         f"{result.skipped_overridden} skipped, {result.soft_deleted} removed"

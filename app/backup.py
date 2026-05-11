@@ -6,15 +6,18 @@ Strategy:
     exists yet, so the user always has a fallback.
   - Uses sqlite3's ``Connection.backup()`` so it's safe to run while the
     app is live — no need to stop the app.
-  - Restore copies the current DB to ``data/palipints.db.pre-restore``
-    first (safety net), then writes the backup over the current DB.
+  - Restore also goes through the online backup API: it snapshots the
+    current DB to ``data/palipints.db.pre-restore`` (safety net), then
+    writes the backup pages into the live DB file in place. Going through
+    SQLite means concurrent request handlers / the sync worker either
+    block on writes or see SQLITE_BUSY — they can't corrupt the file via
+    a half-copied raw byte stream.
   - All file ops guarded by a module-level lock so a sync running in the
     background thread can't race with a restore from the admin UI.
 """
 from __future__ import annotations
 
 import logging
-import shutil
 import sqlite3
 import threading
 import time
@@ -121,13 +124,37 @@ def backup_now() -> dict:
     }
 
 
+def _sqlite_copy(src_path: Path, dst_path: Path) -> None:
+    """Copy ``src_path`` into ``dst_path`` via SQLite's online backup API.
+
+    The destination connection acquires SQLite write locks while the
+    pages are written, so this is safe to run against a live DB. Caller
+    is responsible for any lock/tmp-file orchestration around this.
+    """
+    src = sqlite3.connect(str(src_path))
+    try:
+        dst = sqlite3.connect(str(dst_path))
+        try:
+            with dst:
+                src.backup(dst)
+        finally:
+            dst.close()
+    finally:
+        src.close()
+
+
 def restore_from_backup() -> dict:
     """Replace the current DB with the backup.
 
     Caller is expected to invalidate any open DB connections (Flask's
     teardown handlers will reopen on the next request). The current DB
-    is copied to ``data/palipints.db.pre-restore`` before being
+    is snapshotted to ``data/palipints.db.pre-restore`` before being
     overwritten, so the user has one more level of safety net.
+
+    The pre-restore snapshot and the restore itself both go through
+    SQLite's online backup API rather than a raw file copy, so any
+    request handler or the sync worker that happens to hold a connection
+    will be serialised by SQLite's locking instead of seeing a torn file.
     """
     _ensure_dirs()
     if not BACKUP_PATH.exists():
@@ -145,14 +172,21 @@ def restore_from_backup() -> dict:
 
     with _io_lock:
         try:
-            # Snapshot the current DB to the pre-restore file (safety net).
+            # Snapshot the live DB to PRE_RESTORE_PATH (via a tmp file so
+            # a crash mid-snapshot leaves the previous safety net intact).
             if DB_PATH.exists():
-                shutil.copy2(DB_PATH, PRE_RESTORE_PATH)
-            # Replace current DB with backup contents.
-            shutil.copy2(BACKUP_PATH, DB_PATH)
-        except OSError as e:
+                pre_tmp = PRE_RESTORE_PATH.with_suffix(".pre-restore.tmp")
+                if pre_tmp.exists():
+                    pre_tmp.unlink()
+                _sqlite_copy(DB_PATH, pre_tmp)
+                pre_tmp.replace(PRE_RESTORE_PATH)
+
+            # Restore: write the backup pages into the live DB file via
+            # the online backup API. Goes through SQLite's locking.
+            _sqlite_copy(BACKUP_PATH, DB_PATH)
+        except (sqlite3.Error, OSError) as e:
             log.exception("restore failed")
-            return {"ok": False, "error": f"file copy error: {e}"}
+            return {"ok": False, "error": f"restore error: {e}"}
 
     log.info("restored DB from %s; previous DB saved to %s", BACKUP_PATH, PRE_RESTORE_PATH)
     return {

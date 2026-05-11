@@ -127,6 +127,35 @@ def save_tap(tap_number: int):
     return redirect(url_for("admin.taps"))
 
 
+@bp.route("/taps/<int:tap_number>/image", methods=["POST"])
+def save_tap_image(tap_number: int):
+    """Image-only update for a tap.
+
+    The master "Save all taps" flow updates rows over JSON without
+    reloading, so the legacy per-tap form's hidden text/price/color
+    inputs go stale. This endpoint only touches ``image_override_path``
+    so an image upload after a master save can't clobber unrelated
+    fields with stale values.
+    """
+    if not get_tap(tap_number):
+        return ("not found", 404)
+
+    values: dict = {}
+    if "image" in request.files:
+        image_path = save_upload(request.files["image"])
+        if image_path:
+            values["image_override_path"] = image_path
+    if request.form.get("clear_image") and "image_override_path" not in values:
+        values["image_override_path"] = None
+
+    if values:
+        update_tap(tap_number, values)
+        flash(f"Tap {tap_number} image updated.", "success")
+    else:
+        flash(f"Tap {tap_number} — no image change.", "info")
+    return redirect(url_for("admin.taps"))
+
+
 @bp.route("/taps/<int:tap_number>/clear", methods=["POST"])
 def clear(tap_number: int):
     clear_tap(tap_number)
