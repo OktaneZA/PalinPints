@@ -1,5 +1,13 @@
 /* Structural baseline — themes override colors, fonts, decorations.
    Designed for a 1920x1080 logical stage; JS scales the stage to fit any panel. */
+
+/* Motion tokens — local for now; move into a shared tokens.css when the
+   admin/display CSS gets unified. */
+:root {
+  --display-fade-ms: 250ms;
+  --display-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 * { box-sizing: border-box; }
 html, body {
   margin: 0; padding: 0;
@@ -13,7 +21,11 @@ html, body {
   position: relative;
   overflow: hidden;
   transform-origin: 0 0;
+  /* Faded out by JS before a version-change reload, so the page swap
+     blends into the new theme instead of snapping through white. */
+  transition: opacity var(--display-fade-ms) var(--display-ease);
 }
+body.is-leaving .stage { opacity: 0; }
 
 .display-header {
   display: flex;
@@ -64,6 +76,20 @@ html, body {
 .beer-row > .tap-num { text-align: center; }
 .beer-row.is-hidden { display: none; }
 
+/* Cross-fade for page rotation. .is-hidden still removes the row from
+   layout (display: none) so pages don't stack; .is-fading-out and
+   .is-pre-enter sit at opacity 0 either side of the swap. .is-pre-enter
+   disables the transition so the JS can pin a row at 0 before fading
+   it back in on the next frame. */
+.beer-row,
+.tap-separator {
+  transition: opacity var(--display-fade-ms) var(--display-ease);
+}
+.beer-row.is-fading-out,
+.tap-separator.is-fading-out { opacity: 0; }
+.beer-row.is-pre-enter,
+.tap-separator.is-pre-enter { opacity: 0; transition: none; }
+
 /* "Guest Beers" separator row used when tap_order_mode is home_first.
    Per-theme CSS sets font, color, and the top border (which mirrors the
    theme's .display-header bottom border). */
@@ -73,6 +99,12 @@ html, body {
   margin-top: 6px;
 }
 .tap-separator.is-hidden { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage,
+  .beer-row,
+  .tap-separator { transition: none !important; }
+}
 
 .cat-tag {
   text-align: right;

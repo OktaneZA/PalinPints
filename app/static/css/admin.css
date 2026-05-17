@@ -12,10 +12,16 @@
   --accent-glow: rgba(176, 106, 30, 0.2);
   --danger: #b03434;
   --success: #2e7d4f;
+  --info: #2563a8;
   --header-bg: #1f2c39;
   --header-fg: #f3efe6;
   --header-muted: #9aa5b1;
   --input-bg: #ffffff;
+
+  /* Motion + focus tokens — local for now; will move into a shared
+     tokens.css when admin/display CSS is unified. */
+  --transition-fast: 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
 * { box-sizing: border-box; }
 html, body {
@@ -36,21 +42,58 @@ html, body {
 .admin-header nav a {
   color: var(--header-fg); text-decoration: none; padding: 6px 10px;
   border-radius: 6px; font-size: 14px;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 .admin-header nav a.active { background: rgba(255,255,255,0.08); color: var(--accent); }
 .admin-header nav a:hover { background: rgba(255,255,255,0.06); }
+.admin-header nav a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--header-bg), 0 0 0 4px var(--accent);
+}
 
 main { max-width: 1100px; margin: 0 auto; padding: 24px; }
 
 h1 { margin-top: 0; }
 .hint { color: var(--muted); margin-top: -8px; }
 
+/* Shared focus + transition for every interactive form control. Per-section
+   selectors below already set padding/border/background; this layer adds
+   the focus ring + a soft animated border. */
+input, select, textarea, button {
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
 .flashes { max-width: 1100px; margin: 12px auto 0; padding: 0 24px; }
 .flash {
   padding: 10px 14px; border-radius: 6px; margin-bottom: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--fg);
 }
-.flash-success { background: #def0e2; color: var(--success); border: 1px solid #b9d8c1; }
-.flash-error { background: #f8dada; color: var(--danger); border: 1px solid #e2b6b6; }
+/* Tint the flash backgrounds from the semantic colour so dark themes
+   don't end up with pastel boxes pasted on a dark card. */
+.flash-success {
+  background: color-mix(in srgb, var(--success) 14%, var(--card));
+  border-color: color-mix(in srgb, var(--success) 40%, var(--card));
+  color: var(--success);
+}
+.flash-error {
+  background: color-mix(in srgb, var(--danger) 14%, var(--card));
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--card));
+  color: var(--danger);
+}
+.flash-info {
+  background: color-mix(in srgb, var(--info) 14%, var(--card));
+  border-color: color-mix(in srgb, var(--info) 40%, var(--card));
+  color: var(--info);
+}
 
 /* Tap cards */
 .tap-card {
@@ -76,8 +119,8 @@ h1 { margin-top: 0; }
 
 .tap-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px 14px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 14px;
 }
 .tap-grid label {
   display: flex; flex-direction: column;
@@ -341,7 +384,11 @@ h1 { margin-top: 0; }
 }
 .bl-badge-home     { background: var(--accent-glow); color: var(--accent); border-color: var(--accent); }
 .bl-badge-override { background: rgba(176, 106, 30, 0.12); color: var(--accent); border-color: var(--accent); }
-.bl-badge-deleted  { background: #f8dada; color: var(--danger); border-color: var(--danger); }
+.bl-badge-deleted  {
+  background: color-mix(in srgb, var(--danger) 14%, var(--card));
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--card));
+}
 
 .bl-edit-row td { background: var(--surface-soft); padding: 14px 18px; }
 .bl-edit-form {
@@ -385,12 +432,18 @@ h1 { margin-top: 0; }
   padding: 6px 14px; border-radius: 6px;
   border: 1px solid transparent;
   font-size: 14px; cursor: pointer;
+  transition: filter var(--transition-fast), box-shadow var(--transition-fast),
+              background var(--transition-fast), border-color var(--transition-fast);
 }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.btn:active:not(:disabled) { filter: brightness(0.92); }
 .btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { filter: brightness(1.05); }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.05); }
 .btn-secondary { background: var(--card); color: var(--fg); border-color: var(--border); }
-.btn-secondary:hover { filter: brightness(0.97); }
+.btn-secondary:hover:not(:disabled) { filter: brightness(0.97); }
 .btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { filter: brightness(1.05); }
 
 /* Settings */
 .settings-form fieldset {
@@ -462,6 +515,13 @@ div.special-form {
   font-weight: 700;
   position: relative;
   overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+              transform var(--transition-fast);
+}
+.theme-option:hover .theme-card { transform: translateY(-1px); }
+.theme-option input:focus-visible + .theme-card {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
 }
 .theme-card-name { display: block; font-size: 18px; }
 .theme-card-desc { display: block; font-weight: 400; font-size: 12px; opacity: 0.75; margin-top: 4px; }
@@ -503,7 +563,16 @@ div.special-form {
    Per-theme palettes — admin re-skins to mirror the display.
    ============================================================ */
 
-/* Marble — same as the :root defaults; no override needed. */
+/* Marble — warm cream palette; nudge accent toward the display CSS's
+   #8a6f3a (cat-tag colour) and swap the navy header for a warm dark
+   brown so the chrome doesn't clash with the cream body. */
+body[data-theme="marble"] {
+  --accent: #8a6f3a;
+  --accent-glow: rgba(138, 111, 58, 0.22);
+  --header-bg: #2d2520;
+  --header-fg: #f5f0e6;
+  --header-muted: #c9bfa8;
+}
 
 body[data-theme="neon"] {
   --fg: #f0f0ff;
