@@ -1,0 +1,46 @@
+/* Shared @font-face declarations — loaded by both the display and admin
+   so the theme picker on /admin/settings can preview each theme's display
+   typography. The Google Fonts URL in display.html / _base.html covers
+   the remote-hosted families (Bebas Neue, Inter, Playfair Display, Caveat,
+   Special Elite, Archivo Black, Alegreya Sans intermediate weights).
+
+   LICENSING NOTE — PP Fragment Glare
+   ----------------------------------
+   PP Fragment Glare is a commercial typeface from Pangram Pangram. The
+   file in ../fonts/ may not be redistributed and may not be used on a
+   commercially-deployed kiosk without a paid licence.
+   • Buy / sign up for the free personal-use trial:
+     https://pangrampangram.com/products/fragment-glare
+   • Licence terms:
+     https://pangrampangram.com/pages/licenses
+   If the .otf is missing, the themes fall back to 'Archivo Black' (free,
+   Google Fonts) — see the font-family chain in theme-palindrome[4-6].css.
+   Alegreya Sans is OFL-licensed and free for any use. */
+@font-face {
+  font-family: 'PP Fragment Glare';
+  src: url('../fonts/PPFragment-GlareExtraBold.otf') format('opentype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Alegreya Sans';
+  src: url('../fonts/AlegreyaSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Alegreya Sans';
+  src: url('../fonts/AlegreyaSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Alegreya Sans';
+  src: url('../fonts/AlegreyaSans-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}

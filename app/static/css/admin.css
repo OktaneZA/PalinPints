@@ -116,16 +116,34 @@ textarea:focus-visible {
 .active-toggle { display: flex; align-items: center; gap: 6px; }
 .tap-card-header .btn { margin-left: auto; }
 .tap-card-header .btn + .btn { margin-left: 8px; }
+/* Clear-tap form sits between Search and the badge in the header.
+   display: contents lets its button participate in the parent flex
+   layout directly so it lines up alongside the other header buttons. */
+.tap-clear-form { display: contents; }
 
 .tap-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px 14px;
+}
+@media (max-width: 900px) {
+  .tap-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .tap-grid { grid-template-columns: 1fr; }
 }
 .tap-grid label {
   display: flex; flex-direction: column;
   font-size: 12px; color: var(--muted);
   gap: 3px;
+}
+/* Pin inputs/selects to the bottom of the label cell so the heading area
+   stretches and inputs across the row align horizontally regardless of
+   whether a label includes a required asterisk. Excludes labels that lay
+   out horizontally (like the Override-color toggle). */
+.tap-grid label:not(.active-toggle) > input,
+.tap-grid label:not(.active-toggle) > select {
+  margin-top: auto;
 }
 .tap-grid input, .tap-grid select {
   padding: 6px 8px;
@@ -135,16 +153,21 @@ textarea:focus-visible {
   font-size: 14px;
   color: var(--fg);
 }
-.tap-grid label.color-override { flex-direction: row; align-items: center; gap: 8px; }
 
 .prices-fieldset {
-  grid-column: span 2;
+  grid-column: 1 / -1;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 12px 10px;
   margin: 0;
   background: var(--surface-soft);
+  /* Spread the four price toggles horizontally across the full row. */
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 18px;
+  align-items: center;
 }
+.prices-fieldset legend { grid-column: 1 / -1; }
 .prices-fieldset legend {
   padding: 0 6px;
   font-size: 12px;
@@ -152,13 +175,14 @@ textarea:focus-visible {
 }
 .prices-fieldset .hint-inline { font-weight: 400; font-style: italic; }
 .prices-fieldset .price-row {
-  display: grid;
-  grid-template-columns: 1fr 110px;
-  gap: 10px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding: 3px 0;
+  margin: 0;
 }
 .prices-fieldset .price-toggle {
+  display: flex;
   flex-direction: row;
   align-items: center;
   gap: 6px;
@@ -167,11 +191,13 @@ textarea:focus-visible {
   margin: 0;
 }
 .prices-fieldset input[type="number"] {
+  width: 100%;
   padding: 5px 8px;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--input-bg);
   color: var(--fg);
+  box-sizing: border-box;
 }
 
 .tap-card-footer { margin-top: 10px; min-height: 16px; }
@@ -450,13 +476,98 @@ textarea:focus-visible {
   border: 1px solid var(--border); border-radius: 8px;
   background: var(--card); margin-bottom: 14px; padding: 12px 18px 18px;
 }
-.settings-form legend { font-weight: 700; padding: 0 6px; }
+.settings-form legend { font-weight: 700; font-size: 15px; padding: 0 6px; }
+.settings-form,
+.settings-form p,
+.settings-form .hint {
+  font-size: 14px;
+}
 .settings-form label {
   display: flex; flex-direction: column;
-  font-size: 13px; color: var(--muted); gap: 4px;
+  font-size: 14px; color: var(--muted); gap: 4px;
   margin-bottom: 10px;
 }
-.settings-form label.radio { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); }
+.settings-form label.radio { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); font-size: 14px; }
+.settings-form .muted { font-size: 14px; }
+
+/* Toggle switch — styled checkbox used in the Day/night switching fieldset. */
+.settings-form label.switch {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  color: var(--fg);
+  cursor: pointer;
+  user-select: none;
+}
+.settings-form label.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.switch-slider {
+  display: inline-block;
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--border);
+  border-radius: 999px;
+  flex-shrink: 0;
+  transition: background var(--transition-fast);
+}
+.switch-slider::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-fast);
+}
+.settings-form label.switch input:checked + .switch-slider {
+  background: var(--accent);
+}
+.settings-form label.switch input:checked + .switch-slider::after {
+  transform: translateX(20px);
+}
+.settings-form label.switch input:focus-visible + .switch-slider {
+  box-shadow: var(--focus-ring);
+}
+.switch-text { font-weight: 500; font-size: 14px; }
+[hidden] { display: none !important; }
+
+/* Holiday icon gallery — preview of each Twemoji used by the display
+   overlay, shown under the Holiday fun toggle. */
+.holiday-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.holiday-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 8px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.holiday-tile img {
+  width: 32px;
+  height: 32px;
+  display: block;
+}
+.holiday-tile figcaption {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+}
 .settings-form input[type=text],
 .settings-form input[type=number],
 .settings-form input[type=time] {
@@ -558,6 +669,54 @@ div.special-form {
   color: #080808;
   border-color: #688531;
 }
+.theme-card-pali4 {
+  background: #E9F1DA;
+  color: #080808;
+  border-color: #93BB48;
+}
+.theme-card-pali5 {
+  background: #080808;
+  color: #93BB48;
+  border-color: #93BB48;
+}
+.theme-card-pali6 {
+  background: linear-gradient(135deg, #93BB48 0%, #688531 100%);
+  color: #080808;
+  border-color: #688531;
+}
+
+/* Preview each theme's display heading font on the card name, so the
+   picker shows typography at a glance — not just the colour palette. */
+.theme-card-marble .theme-card-name {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.theme-card-neon .theme-card-name {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 2.5px;
+  font-size: 20px;
+}
+.theme-card-chalkboard .theme-card-name {
+  font-family: 'Caveat', cursive;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0;
+}
+.theme-card-pali1 .theme-card-name,
+.theme-card-pali2 .theme-card-name,
+.theme-card-pali3 .theme-card-name {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 2.5px;
+  font-size: 20px;
+}
+.theme-card-pali4 .theme-card-name,
+.theme-card-pali5 .theme-card-name,
+.theme-card-pali6 .theme-card-name {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
 
 /* ============================================================
    Per-theme palettes — admin re-skins to mirror the display.
@@ -635,6 +794,53 @@ body[data-theme="palindrome2"] {
 }
 
 body[data-theme="palindrome3"] {
+  --fg: #080808;
+  --muted: #2c3a14;
+  --bg: #688531;
+  --card: #79973a;
+  --surface-soft: #5d7929;
+  --border: #506924;
+  --accent: #080808;
+  --accent-glow: rgba(8, 8, 8, 0.25);
+  --header-bg: #4d6321;
+  --header-fg: #E9F1DA;
+  --header-muted: #c8d4b6;
+  --input-bg: #f5f9eb;
+}
+
+/* Palindromes 4/5/6 mirror 1/2/3 — same palettes, display uses the
+   PP Fragment Glare + Alegreya Sans typography. */
+body[data-theme="palindrome4"] {
+  --fg: #080808;
+  --muted: #4a5b29;
+  --bg: #E9F1DA;
+  --card: #f5f9eb;
+  --surface-soft: #dde7c4;
+  --border: #b6c98e;
+  --accent: #688531;
+  --accent-glow: rgba(104, 133, 49, 0.2);
+  --header-bg: #688531;
+  --header-fg: #f5f9eb;
+  --header-muted: #d2dfb1;
+  --input-bg: #ffffff;
+}
+
+body[data-theme="palindrome5"] {
+  --fg: #E9F1DA;
+  --muted: #a8b89a;
+  --bg: #080808;
+  --card: #161616;
+  --surface-soft: #111111;
+  --border: #2e3724;
+  --accent: #93BB48;
+  --accent-glow: rgba(147, 187, 72, 0.25);
+  --header-bg: #050505;
+  --header-fg: #E9F1DA;
+  --header-muted: #a8b89a;
+  --input-bg: #161616;
+}
+
+body[data-theme="palindrome6"] {
   --fg: #080808;
   --muted: #2c3a14;
   --bg: #688531;

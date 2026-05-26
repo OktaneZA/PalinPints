@@ -12,8 +12,16 @@ data/backups/
 data/.secret_key
 data/images/breweries/*
 data/images/uploads/*
+data/images/beers/*
 !data/images/breweries/.gitkeep
 !data/images/uploads/.gitkeep
+!data/images/beers/.gitkeep
 .idea/
 .vscode/
 *.log
+
+# Local-only artifacts — verification screenshots, editor metadata, and
+# playwright/codex runtime caches. None of these belong in the repo.
+screenshots/
+.codex/
+.playwright-mcp/

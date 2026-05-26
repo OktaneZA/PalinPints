@@ -1,0 +1,116 @@
+/* Palindrome 4 — palindrome1 palette with PP Fragment Glare + Alegreya Sans.
+   Palette: #E9F1DA (bg), #93BB48 (accent), #688531 (heading), #080808 (text).
+   Display font: 'PP Fragment Glare' (drop in @font-face when licensed) → Archivo Black fallback.
+   Body font: Alegreya Sans. */
+body[data-theme="palindrome4"] {
+  font-family: 'Alegreya Sans', 'Inter', system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse at 30% 10%, rgba(255,255,255,0.8) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(147,187,72,0.12) 0%, transparent 60%),
+    #E9F1DA;
+  color: #080808;
+}
+
+body[data-theme="palindrome4"] .display-header {
+  border-bottom: 3px solid #93BB48;
+  padding-bottom: 14px;
+}
+body[data-theme="palindrome4"] .display-header h1 {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 72px;
+  letter-spacing: 4px;
+  color: #080808;
+}
+body[data-theme="palindrome4"] .brand-logo { opacity: 0.95; }
+
+body[data-theme="palindrome4"] .beer-row {
+  border-bottom: 1px solid rgba(104, 133, 49, 0.25);
+}
+body[data-theme="palindrome4"] .beer-row:has(+ .tap-separator) {
+  border-bottom: none;
+}
+body[data-theme="palindrome4"] .tap-separator {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 44px;
+  letter-spacing: 4px;
+  color: #080808;
+  border-top: 3px solid #93BB48;
+  padding-top: 14px;
+}
+body[data-theme="palindrome4"] .cat-tag {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 16px;
+  letter-spacing: 1.4px;
+  color: #688531;
+  text-transform: uppercase;
+  border-right: 2px solid rgba(104, 133, 49, 0.4);
+}
+body[data-theme="palindrome4"] .logo-slot {
+  background: #ffffff;
+  border: 1px solid rgba(104, 133, 49, 0.2);
+}
+body[data-theme="palindrome4"] .logo-slot.color-disc {
+  border: 4px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(104, 133, 49, 0.3);
+}
+
+body[data-theme="palindrome4"] .line-1 {
+  font-size: 26px; font-weight: 700;
+}
+body[data-theme="palindrome4"] .tap-num {
+  color: #93BB48;
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 30px;
+}
+body[data-theme="palindrome4"] .brewery { color: #688531; font-weight: 700; }
+body[data-theme="palindrome4"] .beer-name { color: #080808; }
+
+body[data-theme="palindrome4"] .line-2 {
+  font-size: 15px;
+  color: #4a5b29;
+}
+body[data-theme="palindrome4"] .prices .price {
+  font-size: 22px;
+  font-weight: 800;
+  color: #080808;
+}
+body[data-theme="palindrome4"] .prices .size {
+  font-size: 11px;
+  color: #688531;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+body[data-theme="palindrome4"] .specials-panel,
+body[data-theme="palindrome4"] .events-panel {
+  background: #ffffff;
+  border: 2px solid #93BB48;
+  box-shadow: 0 6px 16px rgba(8, 8, 8, 0.08);
+}
+body[data-theme="palindrome4"] .specials-panel h2,
+body[data-theme="palindrome4"] .events-panel h2 {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  letter-spacing: 3px;
+  color: #688531;
+  font-size: 28px;
+}
+body[data-theme="palindrome4"] .specials-panel li {
+  border-bottom: 1px solid rgba(104, 133, 49, 0.2);
+}
+body[data-theme="palindrome4"] .s-title { font-weight: 700; font-size: 22px; color: #080808; }
+body[data-theme="palindrome4"] .s-desc { color: #4a5b29; font-size: 16px; }
+body[data-theme="palindrome4"] .s-price {
+  color: #93BB48;
+  font-weight: 800;
+  font-size: 24px;
+  margin-top: 4px;
+}
+
+body[data-theme="palindrome4"] .display-footer { font-size: 12px; color: #688531; }
+body[data-theme="palindrome4"] .empty { color: #4a5b29; }
+body[data-theme="palindrome4"] .empty p {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 36px; letter-spacing: 3px;
+  color: #688531;
+}

@@ -8,9 +8,8 @@ import qrcode.image.svg
 from flask import Blueprint, Response, abort, jsonify, render_template, request, send_file, url_for
 
 from . import IMAGES_DIR, STYLE_CATEGORIES, THEME_HOP_FALLBACK
-from .holidays import active_holiday
 from .images import resolve_logo_path
-from .models import state_snapshot
+from .models import is_home_brewery, state_snapshot
 
 bp = Blueprint("display", __name__)
 
@@ -34,9 +33,7 @@ def _resolve_tap_logo_url(tap: dict, settings: dict, hop_fallback_url: str) -> s
     if rel:
         return url_for("serve_data_image", relpath=rel)
 
-    brewery = (tap.get("brewery") or "").strip().lower()
-    home_brewery = (settings.get("home_brewery") or "").strip().lower()
-    if brewery and home_brewery and brewery == home_brewery:
+    if is_home_brewery(tap.get("brewery"), settings.get("home_brewery")):
         return url_for("static", filename="img/palindrome-logo.svg")
 
     return hop_fallback_url
@@ -55,11 +52,10 @@ def _build_groups(taps: list[dict], settings: dict) -> list[tuple[str, list[dict
         return [("", sorted(taps, key=lambda t: t.get("tap_number") or 0))]
 
     if mode == "home_first":
-        home_name = (settings.get("home_brewery") or "").strip().lower()
+        home_name = settings.get("home_brewery")
         home, guests = [], []
         for tap in taps:
-            tap_brewery = (tap.get("brewery") or "").strip().lower()
-            if home_name and tap_brewery == home_name:
+            if is_home_brewery(tap.get("brewery"), home_name):
                 home.append(tap)
             else:
                 guests.append(tap)
@@ -96,7 +92,10 @@ def display():
 
     grouped = _build_groups(snap["taps"], settings)
 
-    holiday = active_holiday() if settings.get("holiday_fun_enabled") else None
+    # state_snapshot resolves the active holiday and includes it in the
+    # version_hash, so the kiosk reloads automatically when the date rolls
+    # into / out of a holiday window.
+    holiday = snap.get("holiday")
     # Debug/preview override: ?holiday=xmas forces the icon to render today.
     # Only honoured when holiday_fun_enabled is on so a stuck URL can't bypass the toggle.
     override = request.args.get("holiday")

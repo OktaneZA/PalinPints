@@ -7,11 +7,12 @@ from flask import Blueprint, jsonify, request
 
 from .backup import backup_info, backup_now, restore_from_backup
 from .db import close_db, get_db
-from .internetscraping import download_brewery_logo, fetch_beer_detail, search_beers
+from .internetscraping import download_beer_image, download_brewery_logo, fetch_beer_detail, search_beers
 from .models import (
     BEER_LIBRARY_EDITABLE_FIELDS,
     get_beer,
     get_settings,
+    is_home_brewery,
     reset_beer_override,
     search_beer_library,
     update_beer_override,
@@ -24,7 +25,22 @@ bp = Blueprint("api", __name__, url_prefix="/admin/api")
 def _public_hit(hit) -> dict:
     payload = asdict(hit)
     payload["source_slug"] = payload.pop("untappd_slug", None)
+    _apply_home_brewery_location(payload)
     return payload
+
+
+def _apply_home_brewery_location(payload: dict) -> None:
+    """Replace the scraped location with the configured home-brewery location
+    when the hit's brewery is recognised as the home brewery. Untappd's data
+    for many breweries is incomplete (e.g. ' England' for Palindrome) — the
+    operator's own setting is the source of truth for their own beers."""
+    if not payload.get("brewery"):
+        return
+    settings = get_settings()
+    if is_home_brewery(payload.get("brewery"), settings.get("home_brewery")):
+        home_loc = (settings.get("home_brewery_location") or "").strip()
+        if home_loc:
+            payload["location"] = home_loc
 
 
 @bp.route("/breweries")
@@ -60,10 +76,13 @@ def web_search():
 
 @bp.route("/web-search/select")
 def web_select():
-    """Fetch full detail for a selected slug + download brewery logo."""
+    """Fetch full detail for a selected slug + download brewery logo + beer
+    image. ``thumbnail_url`` is passed in from the original search result so
+    we can save a per-beer icon to use as the tap image override."""
     slug = (request.args.get("slug") or "").strip()
     if not slug:
         return jsonify({"error": "missing slug"}), 400
+    thumbnail_url = (request.args.get("thumbnail_url") or "").strip() or None
 
     hit = fetch_beer_detail(slug)
     payload = _public_hit(hit)
@@ -72,6 +91,12 @@ def web_select():
         payload["brewery_logo_local"] = rel
         if rel:
             payload["brewery_logo_local_url"] = f"/data-image/{rel}"
+
+    if thumbnail_url and not hit.error:
+        beer_rel = download_beer_image(slug, thumbnail_url)
+        if beer_rel:
+            payload["beer_image_local"] = beer_rel
+            payload["beer_image_local_url"] = f"/data-image/{beer_rel}"
     return jsonify(payload)
 
 

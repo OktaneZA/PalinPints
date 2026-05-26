@@ -12,12 +12,14 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     home_brewery TEXT NOT NULL DEFAULT 'Palindrome Brewing Co',
+    home_brewery_location TEXT NOT NULL DEFAULT 'London, UK',
     home_brewery_logo_path TEXT,
     display_style TEXT NOT NULL DEFAULT 'logo',
     display_scale REAL NOT NULL DEFAULT 1.0,
     theme TEXT NOT NULL DEFAULT 'palindrome1',
     day_theme TEXT NOT NULL DEFAULT 'palindrome1',
     night_theme TEXT NOT NULL DEFAULT 'palindrome1',
+    day_night_auto INTEGER NOT NULL DEFAULT 0,
     latitude REAL,
     longitude REAL,
     override_day_start TEXT,
@@ -176,6 +178,29 @@ def init_db() -> None:
         # added it — preserves the user's current look as the daytime default.
         if "day_theme" not in existing_cols and "theme" in existing_cols:
             conn.execute("UPDATE settings SET day_theme = theme WHERE id = 1")
+
+        # Home brewery location — used as the default location on home-
+        # brewery taps and to override the scraped location coming back
+        # from web search when the hit is the home brewery itself.
+        if "home_brewery_location" not in existing_cols:
+            conn.execute(
+                "ALTER TABLE settings ADD COLUMN home_brewery_location "
+                "TEXT NOT NULL DEFAULT 'London, UK'"
+            )
+
+        # Toggle that gates the whole day/night switching feature. Newly
+        # introduced — defaults off so the display uses one theme only.
+        # Existing installs already running two distinct themes get migrated
+        # to ON so their setup keeps working without intervention.
+        if "day_night_auto" not in existing_cols:
+            conn.execute(
+                "ALTER TABLE settings ADD COLUMN day_night_auto INTEGER NOT NULL DEFAULT 0"
+            )
+            conn.execute(
+                "UPDATE settings SET day_night_auto = 1 "
+                "WHERE day_theme IS NOT NULL AND night_theme IS NOT NULL "
+                "AND day_theme != night_theme"
+            )
 
         # Specials gained an active flag when events landed.
         special_cols = {c[1] for c in conn.execute("PRAGMA table_info(specials)").fetchall()}

@@ -12,6 +12,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 IMAGES_DIR = DATA_DIR / "images"
 UPLOADS_DIR = IMAGES_DIR / "uploads"
 BREWERIES_DIR = IMAGES_DIR / "breweries"
+BEERS_DIR = IMAGES_DIR / "beers"
 DB_PATH = DATA_DIR / "palipints.db"
 LEGACY_DB_PATH = DATA_DIR / "palibeerview.db"
 
@@ -34,6 +35,9 @@ THEME_HOP_FALLBACK: dict[str, str] = {
     "palindrome1": "img/hop-green.svg",
     "palindrome2": "img/hop-green.svg",
     "palindrome3": "img/hop-black.svg",
+    "palindrome4": "img/hop-green.svg",
+    "palindrome5": "img/hop-green.svg",
+    "palindrome6": "img/hop-black.svg",
 }
 
 DEFAULT_CATEGORY_COLORS = {
@@ -106,7 +110,7 @@ def _load_or_create_secret_key() -> str:
 
 
 def create_app() -> Flask:
-    for d in (DATA_DIR, IMAGES_DIR, UPLOADS_DIR, BREWERIES_DIR):
+    for d in (DATA_DIR, IMAGES_DIR, UPLOADS_DIR, BREWERIES_DIR, BEERS_DIR):
         d.mkdir(parents=True, exist_ok=True)
 
     # One-shot migration from the previous filename. Running installs that

@@ -25,6 +25,11 @@
         Active
       </label>
       <button type="button" class="btn btn-secondary" data-web-search>Search the web</button>
+      <form method="post" action="{{ url_for('admin.clear', tap_number=tap.tap_number) }}"
+            class="tap-clear-form"
+            onsubmit="return confirm('Clear all details from tap #{{ tap.tap_number }}?');">
+        <button type="submit" class="btn btn-danger" data-clear-tap>Clear tap</button>
+      </form>
       {% if tap.library_external_id %}
         <span class="tap-lib-badge" title="Populated from the Beer library">📚 from library</span>
       {% endif %}
@@ -62,9 +67,16 @@
       <label>IBU
         <input type="number" step="1" name="ibu" value="{{ tap.ibu if tap.ibu is not none else '' }}" data-field="ibu">
       </label>
+      {% set tap_brewery_lc = (tap.brewery or settings.home_brewery or '')|lower %}
+      {% set home_brewery_lc = (settings.home_brewery or '')|lower %}
+      {% set is_home_tap = home_brewery_lc and tap_brewery_lc == home_brewery_lc %}
       <label>Location
-        <input type="text" name="location" value="{{ tap.location or '' }}" placeholder="e.g. Faversham, UK" data-field="location">
+        <input type="text" name="location"
+               value="{{ tap.location if tap.location else (settings.home_brewery_location if is_home_tap else '') }}"
+               placeholder="e.g. London, UK"
+               data-field="location">
       </label>
+
       <fieldset class="prices-fieldset">
         <legend>Prices <span class="req">*</span><span class="hint-inline"> (tick the ones you sell)</span></legend>
         {% set price_rows = [
@@ -86,14 +98,9 @@
         {% endfor %}
       </fieldset>
 
-      <label class="color-override">
-        <input type="checkbox" name="use_color_override" value="1" {% if tap.color_override %}checked{% endif %}>
-        Override color
-        <input type="color" name="color_override" value="{{ tap.color_override or '#888888' }}">
-      </label>
-
       <input type="hidden" name="source_slug" value="{{ tap.untappd_slug or '' }}" data-field="source_slug">
       <input type="hidden" name="library_external_id" value="{{ tap.library_external_id or '' }}" data-field="library_external_id">
+      <input type="hidden" name="image_override_path" value="{{ tap.image_override_path or '' }}" data-field="image_override_path">
     </div>
 
     <div class="tap-card-footer">

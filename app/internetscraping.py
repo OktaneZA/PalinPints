@@ -1,10 +1,10 @@
 """
 Public beer-page scraper.
 
-This is the ONE place that knows about Untappd's HTML. When Untappd ships a
+This is the ONE place that knows about beer 's HTML. When beer ships a
 markup change, fix the selectors here only.
 
-Selectors are best-effort and based on Untappd's structure as of writing. We
+Selectors are best-effort and based on beers's structure as of writing. We
 try several fallbacks per field; if everything fails, the field is None and
 the admin can fill it manually.
 """
@@ -30,13 +30,25 @@ try:
 except Exception:
     _SSL_CONTEXT = True
 
-from . import BREWERIES_DIR
+from . import BEERS_DIR, BREWERIES_DIR
 from .db import get_db
 
 USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux armv7l) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 PaliPints/1.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/149.0.0.0 Safari/537.36"
 )
+# Client Hints headers that modern Chromium sends alongside the UA string —
+# many sites check these in addition to (or instead of) User-Agent. Versions
+# match the Chrome 149 claim in USER_AGENT above; keep them in sync if the UA
+# is ever bumped.
+BROWSER_HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept-Language": "en-US,en;q=0.9",
+    "Sec-Ch-Ua": '"Google Chrome";v="149", "Chromium";v="149", "Not?A_Brand";v="24"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+}
 CACHE_TTL_SECONDS = 24 * 60 * 60
 REQUEST_DELAY_SECONDS = 1.0
 TIMEOUT = httpx.Timeout(15.0)
@@ -64,8 +76,8 @@ def _polite_get(url: str) -> str:
     elapsed = time.time() - _last_request_at
     if elapsed < REQUEST_DELAY_SECONDS:
         time.sleep(REQUEST_DELAY_SECONDS - elapsed)
-    headers = {"User-Agent": USER_AGENT, "Accept-Language": "en-GB,en;q=0.9"}
-    with httpx.Client(timeout=TIMEOUT, follow_redirects=True, headers=headers, verify=_SSL_CONTEXT) as client:
+    with httpx.Client(timeout=TIMEOUT, follow_redirects=True,
+                      headers=BROWSER_HEADERS, verify=_SSL_CONTEXT) as client:
         resp = client.get(url)
         resp.raise_for_status()
         _last_request_at = time.time()
@@ -300,16 +312,41 @@ def _fetch_brewery_info(brewery_slug: str) -> dict[str, Any]:
             info["logo_url"] = img["src"]
             break
 
+    # Prefer the JSON-LD structured address Untappd embeds on every brewery
+    # page — it has clean city/region fields. Falls back to the legacy
+    # `.location` CSS selectors for pages that don't carry the LD block.
+    info["location"] = _location_from_ld(soup) or _location_from_selectors(soup)
+
+    _cache_set(cache_key, info)
+    return info
+
+
+def _location_from_ld(soup: BeautifulSoup) -> str | None:
+    """Pull a 'City, Region' string out of the schema.org JSON-LD block."""
+    for script in soup.find_all("script", {"type": "application/ld+json"}):
+        try:
+            data = json.loads(script.string or "")
+        except (ValueError, TypeError):
+            continue
+        addr = (data or {}).get("address") or {}
+        if not isinstance(addr, dict):
+            continue
+        city = (addr.get("addressLocality") or "").strip()
+        region = (addr.get("addressRegion") or "").strip()
+        parts = [p for p in (city, region) if p]
+        if parts:
+            return ", ".join(parts)
+    return None
+
+
+def _location_from_selectors(soup: BeautifulSoup) -> str | None:
     for sel in [".location", "span.location", "p.location", ".brewery-location"]:
         loc_el = soup.select_one(sel)
         if loc_el:
             text = loc_el.get_text(strip=True)
             if text and "," in text:
-                info["location"] = text
-                break
-
-    _cache_set(cache_key, info)
-    return info
+                return text
+    return None
 
 
 # Backwards-compatible shim — older callers expected just the logo URL.
@@ -353,7 +390,7 @@ def download_brewery_logo(brewery_name: str, logo_url: str | None) -> str | None
 
     try:
         with httpx.Client(timeout=TIMEOUT, follow_redirects=True,
-                          headers={"User-Agent": USER_AGENT},
+                          headers=BROWSER_HEADERS,
                           verify=_SSL_CONTEXT) as client:
             resp = client.get(logo_url)
             resp.raise_for_status()
@@ -368,6 +405,43 @@ def download_brewery_logo(brewery_name: str, logo_url: str | None) -> str | None
     )
     get_db().commit()
     return str(rel).replace("\\", "/")
+
+
+def download_beer_image(beer_slug: str, image_url: str | None) -> str | None:
+    """Download a beer's icon (Untappd thumbnail) into BEERS_DIR keyed by the
+    beer slug. Returns the relative path. Existing files are overwritten so a
+    re-search refreshes the image. Untappd's "_sm" URLs are small (~100px) —
+    try "_md" first for sharper kiosk display, fall back to "_sm" if 403/404."""
+    if not beer_slug or not image_url:
+        return None
+
+    slug = re.sub(r"[^a-z0-9_-]+", "-", beer_slug.lower()).strip("-") or "beer"
+
+    candidates: list[str] = []
+    if "_sm." in image_url:
+        candidates.append(image_url.replace("_sm.", "_md."))
+    candidates.append(image_url)
+    # de-dup while preserving order
+    seen: set[str] = set()
+    candidates = [u for u in candidates if not (u in seen or seen.add(u))]
+
+    for url in candidates:
+        ext = ".png"
+        m = re.search(r"\.(png|jpg|jpeg|gif|webp)(?:\?|$)", url, re.IGNORECASE)
+        if m:
+            ext = "." + m.group(1).lower()
+        dest = BEERS_DIR / f"{slug}{ext}"
+        try:
+            with httpx.Client(timeout=TIMEOUT, follow_redirects=True,
+                              headers=BROWSER_HEADERS,
+                              verify=_SSL_CONTEXT) as client:
+                resp = client.get(url)
+                resp.raise_for_status()
+                dest.write_bytes(resp.content)
+            return f"beers/{dest.name}"
+        except httpx.HTTPError:
+            continue
+    return None
 
 
 def get_cached_brewery_logo(brewery_name: str | None) -> str | None:

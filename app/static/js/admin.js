@@ -122,12 +122,17 @@
     setField(block, 'source_slug', hit.source_slug);
     setField(block, 'library_external_id', '');
     setField(block, 'location', '');
+    // Clear any previous beer image — replaced by the new download below if
+    // the selected hit has its own icon.
+    setField(block, 'image_override_path', '');
 
     autoSelectCategoryFromSubstyle(block, hit.sub_style);
 
     if (hit.source_slug) {
       try {
-        const r = await fetch('/admin/api/web-search/select?slug=' + encodeURIComponent(hit.source_slug));
+        const params = new URLSearchParams({ slug: hit.source_slug });
+        if (hit.thumbnail_url) params.set('thumbnail_url', hit.thumbnail_url);
+        const r = await fetch('/admin/api/web-search/select?' + params.toString());
         const detail = await r.json();
         if (detail && !detail.error) {
           if (detail.brewery)   setField(block, 'brewery', detail.brewery);
@@ -136,6 +141,7 @@
           if (detail.abv != null) setField(block, 'abv', detail.abv);
           if (detail.ibu != null) setField(block, 'ibu', detail.ibu);
           if (detail.location)  setField(block, 'location', detail.location);
+          if (detail.beer_image_local) setField(block, 'image_override_path', detail.beer_image_local);
         }
       } catch (e) { /* basic fields already applied; swallow */ }
     }
@@ -150,6 +156,9 @@
     } else {
       el.value = (value == null) ? '' : value;
     }
+    // Programmatic assignment doesn't trigger 'input' on its own — the
+    // unsaved-changes guard listens for it, so dispatch explicitly.
+    el.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   function autoSelectCategoryFromSubstyle(block, substyle) {
@@ -158,8 +167,7 @@
     const lc = substyle.toLowerCase();
     for (const [cat, options] of Object.entries(SUBSTYLES)) {
       if (options.some(o => o.toLowerCase() === lc)) {
-        driver.value = cat;
-        refreshSubstyleOptions(block);
+        setDriver(driver, cat, block);
         return;
       }
     }
@@ -171,9 +179,14 @@
       [/lager|pilsner|helles|bock|m[äa]rzen|k[öo]lsch|altbier|schwarz/i, 'Lager & Pilsner'],
     ];
     for (const [re, cat] of guesses) {
-      if (re.test(lc)) { driver.value = cat; refreshSubstyleOptions(block); return; }
+      if (re.test(lc)) { setDriver(driver, cat, block); return; }
     }
-    driver.value = 'Historical & Specialty';
+    setDriver(driver, 'Historical & Specialty', block);
+  }
+
+  function setDriver(driver, cat, block) {
+    driver.value = cat;
+    driver.dispatchEvent(new Event('change', { bubbles: true }));
     refreshSubstyleOptions(block);
   }
 
@@ -259,8 +272,7 @@
       setField(block, 'library_external_id', rec.external_id);
       const driver = block.querySelector('[data-substyle-driver]');
       if (driver && rec.style_category) {
-        driver.value = rec.style_category;
-        refreshSubstyleOptions(block);
+        setDriver(driver, rec.style_category, block);
       } else if (rec.sub_style) {
         autoSelectCategoryFromSubstyle(block, rec.sub_style);
       }
@@ -319,6 +331,26 @@
   const saveAllBtn = document.querySelector('[data-taps-save-all]');
   const saveAllStatus = document.querySelector('[data-taps-save-status]');
 
+  // Unsaved-changes guard for the Taps page — warn before reload / close /
+  // navigation when any field has been edited. Cleared when the bulk save
+  // succeeds, or when the user submits an intentional form action (Clear
+  // tap, per-tap image upload).
+  let tapsDirty = false;
+  const markTapsClean = () => { tapsDirty = false; };
+  if (tapsForm) {
+    const markDirty = () => { tapsDirty = true; };
+    tapsForm.addEventListener('input', markDirty);
+    tapsForm.addEventListener('change', markDirty);
+    document.querySelectorAll('form').forEach(f => {
+      if (f !== tapsForm) f.addEventListener('submit', markTapsClean);
+    });
+    window.addEventListener('beforeunload', (e) => {
+      if (!tapsDirty) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  }
+
   if (tapsForm && saveAllBtn) {
     // Prevent native form submission — we serialize in JS.
     tapsForm.addEventListener('submit', (e) => e.preventDefault());
@@ -347,6 +379,7 @@
           setSaveStatus(data.error || 'Save failed.', 'error');
         } else {
           setSaveStatus(data.message || 'Saved.', data.rejected && data.rejected.length ? 'error' : 'success');
+          if (!(data.rejected && data.rejected.length)) markTapsClean();
           (data.rejected || []).forEach(rej => {
             const block = document.querySelector(`[data-tap-block][data-tap="${rej.tap_number}"]`);
             if (!block) return;
@@ -390,10 +423,9 @@
       price_half_enabled: checked('price_half_enabled'),
       price_pint_enabled: checked('price_pint_enabled'),
       price_takeaway_enabled: checked('price_takeaway_enabled'),
-      use_color_override: checked('use_color_override'),
-      color_override: value('color_override'),
       source_slug: value('source_slug'),
       library_external_id: value('library_external_id'),
+      image_override_path: value('image_override_path'),
     };
   }
 
@@ -601,16 +633,24 @@
       if (!externalId) return;
       if (!confirm('Reset this beer to the external source values? Your local edits will be lost.')) return;
       btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = 'Resyncing…';
+      const startedAt = Date.now();
       try {
         const r = await fetch(`/admin/api/beer-library/${encodeURIComponent(externalId)}/reset`, { method: 'POST' });
-        if (r.ok) {
-          // Wait briefly for the worker to resync this row.
-          setTimeout(() => window.location.reload(), 1200);
-        } else {
+        if (!r.ok) {
           btn.disabled = false;
+          btn.textContent = orig;
+          return;
         }
+        // Reset clears the override and wakes the sync worker; wait for the
+        // next sync pass to finish before reloading so the row shows fresh
+        // source values rather than the cleared-but-not-resynced state.
+        await pollSyncStatus({ untilFinishedAfter: startedAt });
+        window.location.reload();
       } catch {
         btn.disabled = false;
+        btn.textContent = orig;
       }
     });
   });

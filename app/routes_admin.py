@@ -111,7 +111,6 @@ def save_tap(tap_number: int):
         "abv": abv,
         "ibu": _to_int(f.get("ibu")),
         "location": (f.get("location") or "").strip() or None,
-        "color_override": (f.get("color_override") or None) if f.get("use_color_override") else None,
         "untappd_slug": f.get("source_slug") or f.get("untappd_slug") or None,
     }
     for kind in PRICE_KINDS:
@@ -198,9 +197,9 @@ def _validate_tap_payload(idx: int, raw: dict) -> tuple[dict | None, list[str]]:
         "abv": abv,
         "ibu": _to_int(str(raw.get("ibu")) if raw.get("ibu") is not None else None),
         "location": (raw.get("location") or "").strip() or None,
-        "color_override": (raw.get("color_override") or None) if raw.get("use_color_override") else None,
         "untappd_slug": (raw.get("source_slug") or raw.get("untappd_slug") or None),
         "library_external_id": (raw.get("library_external_id") or None),
+        "image_override_path": (raw.get("image_override_path") or "").strip() or None,
     }
     for kind in PRICE_KINDS:
         values[f"price_{kind}"] = prices[kind]
@@ -252,7 +251,7 @@ def save_all_taps():
 _TAP_ORDER_MODES = {"tap_number", "style_category", "home_first"}
 _EXTERNAL_DB_SOURCES = {"mock", "postgres"}
 
-_ALLOWED_THEMES = {"marble", "neon", "chalkboard", "palindrome1", "palindrome2", "palindrome3"}
+_ALLOWED_THEMES = {"marble", "neon", "chalkboard", "palindrome1", "palindrome2", "palindrome3", "palindrome4", "palindrome5", "palindrome6"}
 
 
 @bp.route("/beer-library", methods=["GET"])
@@ -331,10 +330,12 @@ def settings():
 
         values = {
             "home_brewery": f.get("home_brewery") or "Palindrome Brewing Co",
+            "home_brewery_location": (f.get("home_brewery_location") or "").strip() or "London, UK",
             "display_style": "color" if f.get("display_style") == "color" else "logo",
             "display_scale": display_scale,
             "day_theme": day_theme,
             "night_theme": night_theme,
+            "day_night_auto": 1 if f.get("day_night_auto") else 0,
             # Keep the legacy `theme` column in sync with the day theme so any
             # consumer still reading it (or a stale state cache) stays valid.
             "theme": day_theme,
@@ -371,11 +372,13 @@ def settings():
         return redirect(url_for("admin.settings"))
 
     from .backup import backup_info
+    from .holidays import HOLIDAY_LABELS
     return render_template(
         "admin/settings.html",
         settings=get_settings(),
         categories=STYLE_CATEGORIES,
         backup=backup_info(),
+        holiday_labels=HOLIDAY_LABELS,
     )
 
 

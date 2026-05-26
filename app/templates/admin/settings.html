@@ -9,6 +9,12 @@
     <label>Brewery name
       <input type="text" name="home_brewery" value="{{ settings.home_brewery }}">
     </label>
+    <label>Location
+      <input type="text" name="home_brewery_location"
+             value="{{ settings.home_brewery_location or '' }}"
+             placeholder="e.g. London, UK">
+      <span class="muted hint">Pre-fills the Location field on new home-brewery taps and overrides what the web scraper returns for your own beers.</span>
+    </label>
     <label>Brewery logo
       <input type="file" name="home_brewery_logo" accept="image/*">
       {% if settings.home_brewery_logo_path %}
@@ -26,11 +32,29 @@
     ('palindrome1', 'Palindrome 1', 'Light brand',           'theme-card-pali1'),
     ('palindrome2', 'Palindrome 2', 'Dark brand',            'theme-card-pali2'),
     ('palindrome3', 'Palindrome 3', 'Green forward',         'theme-card-pali3'),
+    ('palindrome4', 'Palindrome 4', 'Light · Fragment Glare', 'theme-card-pali4'),
+    ('palindrome5', 'Palindrome 5', 'Dark · Fragment Glare',  'theme-card-pali5'),
+    ('palindrome6', 'Palindrome 6', 'Green · Fragment Glare', 'theme-card-pali6'),
   ] %}
 
   <fieldset>
-    <legend>Day theme</legend>
-    <p class="hint">Active during daylight hours.</p>
+    <legend>Day / night switching</legend>
+    <label class="switch">
+      <input type="checkbox" name="day_night_auto" value="1" id="dayNightAuto"
+             {% if settings.day_night_auto %}checked{% endif %}>
+      <span class="switch-slider" aria-hidden="true"></span>
+      <span class="switch-text">Switch theme automatically between day and night</span>
+    </label>
+    <p class="hint">
+      When off, the display uses one theme all the time. When on, it switches
+      at sunrise/sunset (using your location) or at the override times you
+      set below.
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend data-day-theme-legend>Theme</legend>
+    <p class="hint" data-day-theme-hint>The theme used on the display.</p>
     <div class="theme-picker">
       {% for value, name, desc, css in theme_choices %}
       <label class="theme-option">
@@ -44,7 +68,7 @@
     </div>
   </fieldset>
 
-  <fieldset>
+  <fieldset data-day-night-only>
     <legend>Night theme</legend>
     <p class="hint">Used from 30 min before sunset until sunrise (or override times below).</p>
     <div class="theme-picker">
@@ -60,8 +84,8 @@
     </div>
   </fieldset>
 
-  <fieldset>
-    <legend>Day / night switch</legend>
+  <fieldset data-day-night-only>
+    <legend>Location &amp; times</legend>
     <p class="hint">
       Sunset/sunrise are looked up once a week from the public
       sunrise-sunset.org API, using the latitude/longitude below.
@@ -126,37 +150,8 @@
              value="{{ ((settings.display_scale or 1.0) * 100) | round | int }}">
       <span class="muted hint">The display auto-fits any panel (1080p, 4K, etc.). 100% fills the screen; nudge down (e.g. 95) to leave a margin or up (e.g. 105) to slightly overflow.</span>
     </label>
-  </fieldset>
 
-  <fieldset>
-    <legend>Default colors per style</legend>
-    <label>IPA & Pale Ales       <input type="color" name="color_ipa"       value="{{ settings.color_ipa }}"></label>
-    <label>Sour & Wild Ales      <input type="color" name="color_sour"      value="{{ settings.color_sour }}"></label>
-    <label>Stout & Porter        <input type="color" name="color_stout"     value="{{ settings.color_stout }}"></label>
-    <label>Lager & Pilsner       <input type="color" name="color_lager"     value="{{ settings.color_lager }}"></label>
-    <label>Belgian & Farmhouse   <input type="color" name="color_belgian"   value="{{ settings.color_belgian }}"></label>
-    <label>Historical & Specialty<input type="color" name="color_specialty" value="{{ settings.color_specialty }}"></label>
-  </fieldset>
-
-  <fieldset>
-    <legend>Holiday fun</legend>
-    <p class="hint">
-      Show a festive icon in the top-right of the display around major holidays
-      (Christmas, Easter, Halloween, St Patrick's, New Year's, 4th July, April
-      Fools, Thanksgiving, Valentine's). Icons are
-      <a href="https://twemoji.twitter.com/" target="_blank" rel="noopener">Twemoji</a>
-      (CC BY 4.0).
-    </p>
-    <label class="radio">
-      <input type="checkbox" name="holiday_fun_enabled" value="1"
-             {% if settings.holiday_fun_enabled %}checked{% endif %}>
-      Show holiday icons on the display
-    </label>
-  </fieldset>
-
-  <fieldset>
-    <legend>Tap list ordering</legend>
-    <p class="hint">How the active taps are ordered on the TV display.</p>
+    <p class="hint" style="margin-top: 8px;">Tap list ordering — how the active taps are ordered on the TV display.</p>
     <label class="radio">
       <input type="radio" name="tap_order_mode" value="tap_number"
              {% if settings.tap_order_mode == 'tap_number' %}checked{% endif %}>
@@ -172,6 +167,40 @@
              {% if settings.tap_order_mode == 'home_first' %}checked{% endif %}>
       Home brewery first, then a “Guest Beers” separator, then guests
     </label>
+  </fieldset>
+
+  <fieldset data-color-style-only>
+    <legend>Default colors per style</legend>
+    <p class="hint">Used by the colour disc next to each beer on the display.</p>
+    <label>IPA & Pale Ales       <input type="color" name="color_ipa"       value="{{ settings.color_ipa }}"></label>
+    <label>Sour & Wild Ales      <input type="color" name="color_sour"      value="{{ settings.color_sour }}"></label>
+    <label>Stout & Porter        <input type="color" name="color_stout"     value="{{ settings.color_stout }}"></label>
+    <label>Lager & Pilsner       <input type="color" name="color_lager"     value="{{ settings.color_lager }}"></label>
+    <label>Belgian & Farmhouse   <input type="color" name="color_belgian"   value="{{ settings.color_belgian }}"></label>
+    <label>Historical & Specialty<input type="color" name="color_specialty" value="{{ settings.color_specialty }}"></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Holiday fun</legend>
+    <p class="hint">
+      Show a festive icon in the top-right of the display around major holidays.
+      Icons are <a href="https://twemoji.twitter.com/" target="_blank" rel="noopener">Twemoji</a>
+      (CC BY 4.0).
+    </p>
+    <label class="radio">
+      <input type="checkbox" name="holiday_fun_enabled" value="1"
+             {% if settings.holiday_fun_enabled %}checked{% endif %}>
+      Show holiday icons on the display
+    </label>
+    <div class="holiday-gallery">
+      {% for key, label in holiday_labels.items() %}
+      <figure class="holiday-tile">
+        <img src="{{ url_for('static', filename='img/holidays/' + key + '.svg') }}"
+             alt="" loading="lazy" width="32" height="32">
+        <figcaption>{{ label }}</figcaption>
+      </figure>
+      {% endfor %}
+    </div>
   </fieldset>
 
   <fieldset>
@@ -230,6 +259,43 @@
 </form>
 
 <script>
+  // Day/night auto-switch toggle — show or hide the night theme picker and
+  // the location/times block, and rename the visible theme picker so it
+  // reads "Day theme" only when the switch is on.
+  (() => {
+    const toggle = document.getElementById('dayNightAuto');
+    if (!toggle) return;
+    const conditional = document.querySelectorAll('[data-day-night-only]');
+    const legend = document.querySelector('[data-day-theme-legend]');
+    const hint = document.querySelector('[data-day-theme-hint]');
+    const apply = () => {
+      const on = toggle.checked;
+      conditional.forEach(el => { el.hidden = !on; });
+      if (legend) legend.textContent = on ? 'Day theme' : 'Theme';
+      if (hint) {
+        hint.textContent = on
+          ? 'Active during daylight hours.'
+          : 'The theme used on the display.';
+      }
+    };
+    toggle.addEventListener('change', apply);
+    apply();
+  })();
+
+  // Default colours per style — only relevant when the display is showing
+  // beer-colour discs; hide the whole fieldset otherwise.
+  (() => {
+    const radios = document.querySelectorAll('input[name="display_style"]');
+    const conditional = document.querySelectorAll('[data-color-style-only]');
+    if (!radios.length || !conditional.length) return;
+    const apply = () => {
+      const on = document.querySelector('input[name="display_style"]:checked')?.value === 'color';
+      conditional.forEach(el => { el.hidden = !on; });
+    };
+    radios.forEach(r => r.addEventListener('change', apply));
+    apply();
+  })();
+
   document.getElementById('autoLocate')?.addEventListener('click', async (ev) => {
     const btn = ev.currentTarget;
     btn.disabled = true;

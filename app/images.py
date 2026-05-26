@@ -9,6 +9,7 @@ from werkzeug.datastructures import FileStorage
 
 from . import UPLOADS_DIR
 from .internetscraping import get_cached_brewery_logo
+from .models import is_home_brewery
 
 ALLOWED_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 MAX_DIMENSION = 512
@@ -45,9 +46,8 @@ def resolve_logo_path(tap: dict, settings: dict) -> str | None:
         return tap["image_override_path"]
 
     brewery = (tap.get("brewery") or "").strip()
-    home_brewery = (settings.get("home_brewery") or "").strip()
     home_logo = settings.get("home_brewery_logo_path")
-    if brewery and home_brewery and brewery.lower() == home_brewery.lower() and home_logo:
+    if home_logo and is_home_brewery(brewery, settings.get("home_brewery")):
         return home_logo
 
     cached = get_cached_brewery_logo(brewery)

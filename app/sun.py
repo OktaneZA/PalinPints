@@ -15,6 +15,8 @@ from typing import Any
 import httpx
 import truststore
 
+from .internetscraping import BROWSER_HEADERS
+
 log = logging.getLogger(__name__)
 
 CACHE_TTL = timedelta(days=7)
@@ -28,7 +30,7 @@ def _client(timeout: float = 8.0) -> httpx.Client:
     return httpx.Client(
         timeout=timeout,
         verify=_SSL_CTX,
-        headers={"User-Agent": "PaliPints/1.0 (+https://github.com/OktaneZA/PalinPints)"},
+        headers=BROWSER_HEADERS,
     )
 
 
@@ -140,9 +142,13 @@ def effective_theme(settings: dict[str, Any]) -> str:
     operator via override_day_start / override_night_start (HH:MM, 24h).
 
     Falls back to day_theme when no times are configured (e.g. fresh
-    install with no lat/lon and no overrides).
+    install with no lat/lon and no overrides), or when the day/night
+    auto-switch toggle is off (the night_theme + sun settings still persist
+    in the DB but are ignored).
     """
     day_theme = settings.get("day_theme") or settings.get("theme") or "marble"
+    if not settings.get("day_night_auto"):
+        return day_theme
     night_theme = settings.get("night_theme") or day_theme
 
     day_start = (

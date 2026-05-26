@@ -1,0 +1,126 @@
+/* Palindrome 5 — palindrome2 palette with PP Fragment Glare + Alegreya Sans.
+   Palette: #080808 (bg), #93BB48 (accent/glow), #E9F1DA (text), #688531 (deep).
+   Display font: 'PP Fragment Glare' (drop in @font-face when licensed) → Archivo Black fallback.
+   Body font: Alegreya Sans. */
+body[data-theme="palindrome5"] {
+  font-family: 'Alegreya Sans', 'Inter', system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(147,187,72,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 90% 90%, rgba(104,133,49,0.06) 0%, transparent 60%),
+    #080808;
+  color: #E9F1DA;
+}
+
+body[data-theme="palindrome5"] .display-header {
+  border-bottom: 3px solid #93BB48;
+  padding-bottom: 14px;
+}
+body[data-theme="palindrome5"] .display-header h1 {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 72px;
+  letter-spacing: 4px;
+  color: #E9F1DA;
+}
+body[data-theme="palindrome5"] .brand-logo {
+  filter: invert(1) brightness(1.1);
+  opacity: 0.95;
+}
+
+body[data-theme="palindrome5"] .beer-row {
+  border-bottom: 1px solid rgba(147, 187, 72, 0.18);
+}
+body[data-theme="palindrome5"] .beer-row:has(+ .tap-separator) {
+  border-bottom: none;
+}
+body[data-theme="palindrome5"] .tap-separator {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 44px;
+  letter-spacing: 4px;
+  color: #E9F1DA;
+  border-top: 3px solid #93BB48;
+  padding-top: 14px;
+}
+body[data-theme="palindrome5"] .cat-tag {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 16px;
+  letter-spacing: 1.4px;
+  color: #93BB48;
+  text-transform: uppercase;
+  border-right: 2px solid rgba(147, 187, 72, 0.3);
+}
+body[data-theme="palindrome5"] .logo-slot {
+  background: #E9F1DA;
+  box-shadow: 0 0 0 1px rgba(147, 187, 72, 0.4), 0 0 14px rgba(147, 187, 72, 0.15);
+}
+body[data-theme="palindrome5"] .logo-slot.color-disc {
+  border: 4px solid rgba(233, 241, 218, 0.85);
+  box-shadow: 0 0 12px currentColor;
+}
+
+body[data-theme="palindrome5"] .line-1 {
+  font-size: 26px; font-weight: 700;
+}
+body[data-theme="palindrome5"] .tap-num {
+  color: #93BB48;
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 30px;
+  text-shadow: 0 0 10px rgba(147, 187, 72, 0.4);
+}
+body[data-theme="palindrome5"] .brewery { color: #a8b89a; font-weight: 500; }
+body[data-theme="palindrome5"] .beer-name {
+  color: #93BB48;
+  text-shadow: 0 0 8px rgba(147, 187, 72, 0.25);
+}
+
+body[data-theme="palindrome5"] .line-2 {
+  font-size: 15px;
+  color: #8a9982;
+}
+body[data-theme="palindrome5"] .prices .price {
+  font-size: 22px;
+  font-weight: 800;
+  color: #E9F1DA;
+}
+body[data-theme="palindrome5"] .prices .size {
+  font-size: 11px;
+  color: #93BB48;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+body[data-theme="palindrome5"] .specials-panel,
+body[data-theme="palindrome5"] .events-panel {
+  background: rgba(147, 187, 72, 0.06);
+  border: 2px solid #93BB48;
+  box-shadow: 0 0 20px rgba(147, 187, 72, 0.18), inset 0 0 16px rgba(147, 187, 72, 0.08);
+}
+body[data-theme="palindrome5"] .specials-panel h2,
+body[data-theme="palindrome5"] .events-panel h2 {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  letter-spacing: 3px;
+  color: #93BB48;
+  font-size: 28px;
+  text-shadow: 0 0 10px rgba(147, 187, 72, 0.5);
+}
+body[data-theme="palindrome5"] .specials-panel li {
+  border-bottom: 1px solid rgba(147, 187, 72, 0.2);
+}
+body[data-theme="palindrome5"] .s-title { font-weight: 700; font-size: 22px; color: #E9F1DA; }
+body[data-theme="palindrome5"] .s-desc { color: #a8b89a; font-size: 16px; }
+body[data-theme="palindrome5"] .s-price {
+  color: #93BB48;
+  font-weight: 800;
+  font-size: 24px;
+  margin-top: 4px;
+  text-shadow: 0 0 8px rgba(147, 187, 72, 0.5);
+}
+
+body[data-theme="palindrome5"] .display-footer { font-size: 12px; color: #93BB48; }
+body[data-theme="palindrome5"] .empty { color: #a8b89a; }
+body[data-theme="palindrome5"] .empty img { filter: invert(1); }
+body[data-theme="palindrome5"] .empty p {
+  font-family: 'PP Fragment Glare', 'Archivo Black', sans-serif;
+  font-size: 36px; letter-spacing: 3px;
+  color: #93BB48;
+  text-shadow: 0 0 18px rgba(147, 187, 72, 0.4);
+}

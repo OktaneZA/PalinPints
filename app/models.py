@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from .db import get_db
+from .holidays import active_holiday
 from .sun import effective_theme, ensure_sun_cache_fresh
 
 CATEGORY_TO_COLOR_FIELD = {
@@ -29,8 +30,9 @@ def get_settings() -> dict[str, Any]:
 
 def update_settings(values: dict[str, Any]) -> None:
     allowed = {
-        "home_brewery", "home_brewery_logo_path", "display_style", "display_scale", "theme",
-        "day_theme", "night_theme",
+        "home_brewery", "home_brewery_location", "home_brewery_logo_path",
+        "display_style", "display_scale", "theme",
+        "day_theme", "night_theme", "day_night_auto",
         "latitude", "longitude",
         "override_day_start", "override_night_start",
         "cached_sunrise", "cached_sunset", "cache_fetched_at",
@@ -172,6 +174,25 @@ def delete_event(event_id: int) -> None:
     get_db().commit()
 
 
+def is_home_brewery(tap_brewery: str | None, home_brewery: str | None) -> bool:
+    """Match a tap's brewery name against the home brewery setting.
+
+    Accepts case-insensitive equality and word-boundary prefix match in either
+    direction so users can set "Palindrome" while taps say
+    "Palindrome Brewing Co" (or vice versa) and still get the home logo.
+    """
+    a = (tap_brewery or "").strip().lower()
+    b = (home_brewery or "").strip().lower()
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
+    if not longer.startswith(shorter):
+        return False
+    return len(longer) == len(shorter) or longer[len(shorter)] in " \t-"
+
+
 def color_for_tap(tap: dict[str, Any], settings: dict[str, Any]) -> str:
     if tap.get("color_override"):
         return tap["color_override"]
@@ -206,6 +227,11 @@ def state_snapshot() -> dict[str, Any]:
             "display_color": color_for_tap(tap, settings),
         })
 
+    # Active holiday key (or None). Included in the hash so the kiosk
+    # picks up date-driven changes (e.g. Christmas window opens overnight)
+    # on the next /api/state poll without any other state having to move.
+    holiday = active_holiday() if settings.get("holiday_fun_enabled") else None
+
     payload = {
         "settings": {
             k: settings[k] for k in (
@@ -220,6 +246,7 @@ def state_snapshot() -> dict[str, Any]:
         "taps": enriched_taps,
         "specials": specials,
         "events": events,
+        "holiday": holiday,
     }
     canonical = json.dumps(payload, sort_keys=True, default=str)
     payload["version_hash"] = hashlib.sha1(canonical.encode("utf-8")).hexdigest()[:12]
