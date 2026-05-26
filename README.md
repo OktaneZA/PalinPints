@@ -51,31 +51,64 @@ Update later with `bash scripts/update.sh`.
 
 ## Display themes
 
-Six themes are available, switchable from the admin Settings page. Each works with both display modes (brewery logo or beer-color disc):
+Nine themes are available, switchable from the admin Settings page. Each works with both display modes (brewery logo or beer-color disc):
 
 | Theme | Look |
 |---|---|
 | Marble | Light marble background, premium feel |
 | Neon | Black with pink/cyan gradient border, glowing accents |
 | Chalkboard | Slate background with chalk-style text |
-| Palindrome 1 | Light off-white green, brand palette |
-| Palindrome 2 | Vampire black with main-green pop |
-| Palindrome 3 | Green-forward, brand-immersive |
+| Palindrome 1 | Light off-white green, brand palette (Bebas Neue) |
+| Palindrome 2 | Vampire black with main-green pop (Bebas Neue) |
+| Palindrome 3 | Green-forward, brand-immersive (Bebas Neue) |
+| Palindrome 4 | Light brand, PP Fragment Glare + Alegreya Sans |
+| Palindrome 5 | Dark brand, PP Fragment Glare + Alegreya Sans |
+| Palindrome 6 | Green-forward, PP Fragment Glare + Alegreya Sans |
 
-Screenshots of each are in [`screenshots/`](screenshots/).
+The theme picker on the Settings page previews each theme's heading font.
+
+### Day / night switching
+
+There is a single toggle on the Settings page — **Switch theme automatically between day and night** — that gates the whole feature.
+
+- **Off (default)** — the display always uses one theme. The Settings page shows a single "Theme" picker.
+- **On** — picks `day_theme` between sunrise (or the day-start override) and 30 min before sunset (or the night-start override), and `night_theme` otherwise. The Settings page shows separate Day-theme / Night-theme pickers and a Location & times block (lat/lon auto-detect from IP, plus manual HH:MM overrides). Sunrise/sunset is looked up once a week from sunrise-sunset.org.
+
+## Brand fonts
+
+The Palindrome 4 / 5 / 6 themes use **PP Fragment Glare ExtraBold** for headings and **Alegreya Sans** for body text. Files live under [`app/static/fonts/`](app/static/fonts/) with a [README](app/static/fonts/README.md) explaining the licensing — PP Fragment Glare is a commercial Pangram Pangram typeface and a free personal-use trial is available [here](https://pangrampangram.com/products/fragment-glare). If a font file is missing, the themes fall back to `Archivo Black` / `Inter` via Google Fonts so the app keeps rendering.
 
 ## Branding
 
-The Palindrome wordmark and circular seal are bundled in `app/static/img/`. To override the home brewery logo at runtime, upload a new file via the admin Settings page — it gets stored under `data/images/uploads/` and used for any beer brewed by the home brewery.
+The Palindrome wordmark and circular seal are bundled in `app/static/img/`. To override the home brewery logo at runtime, upload a new file via the admin Settings page — it gets stored under `data/images/uploads/` and used for any beer brewed by the home brewery (matched via word-boundary prefix, so the setting `Palindrome` matches a tap with brewery `Palindrome Brewing Co`).
+
+## Tap image fallback chain
+
+When the display renders a tap in **logo** mode, it walks this chain top-to-bottom and uses the first available image:
+
+1. **Per-tap image override** — auto-set from the web-search result when you pick a beer (Untappd beer icon, downloaded under `data/images/beers/`). Can also be set manually via the per-tap upload form.
+2. **Home brewery logo** — when the tap brewery is recognised as the home brewery and a logo was uploaded on the Settings page.
+3. **Bundled home-brewery wordmark** — for home-brewery taps with no other image.
+4. **Cached brewery logo** — downloaded during a previous web-search lookup, under `data/images/breweries/`.
+5. **Theme hop fallback** — the small hop SVG bundled in `static/img/`, picked per-theme.
+
+## Holiday overlay
+
+The display shows a Twemoji-based holiday icon in the top-right around Christmas, New Year's, Valentine's, St Patrick's, April Fools', Easter, 4th of July, Halloween, and Thanksgiving. Toggle from the Settings page. A gallery preview of every icon is shown next to the toggle.
+
+The state snapshot includes the active holiday in its version hash, so a kiosk left running overnight automatically reloads when the date rolls in or out of a holiday window — no admin intervention required.
 
 ## Project layout
 
 ```
 app/                Flask app: routes, templates, static assets
-  static/css/       Layout + theme stylesheets
-  static/img/       Bundled brand assets
+  static/css/       Layout, theme stylesheets, shared @font-face (fonts.css)
+  static/fonts/     PP Fragment Glare ExtraBold + Alegreya Sans (see README)
+  static/img/       Bundled brand assets, hop fallbacks, holiday Twemoji
   templates/        Jinja2 templates (admin + display)
 data/               SQLite DB and uploaded/cached images (gitignored)
+  images/uploads/   Per-tap image uploads
+  images/breweries/ Cached brewery logos from web search
+  images/beers/     Per-beer icons downloaded by web search
 scripts/            Pi installer, systemd unit, kiosk autostart
-screenshots/        Reference screenshots of each theme
 ```

@@ -93,6 +93,19 @@ When it finishes, the script prints both URLs:
 - **Admin (LAN)**: `http://palipints.local:8080/admin` or `http://<pi-ip>:8080/admin`
 - **Display**: `http://localhost:8080/` (auto-launches in Chromium kiosk on next reboot)
 
+### Brand fonts (Palindrome 4 / 5 / 6 only)
+
+The themes Palindrome 4, 5, and 6 use the commercial typeface **PP Fragment Glare ExtraBold**. The git repo ships a copy under `app/static/fonts/` for the operator's convenience, but **anyone forking this repo needs to source their own copy under their own licence**:
+
+- Free personal-use trial (sign-up required): https://pangrampangram.com/products/fragment-glare
+- Commercial licence (required for any customer-facing display): same page, "Buy" tab
+
+If the `.otf` is missing, themes 4-6 fall back to Google's `Archivo Black` automatically — the app still works, just without the licensed brand typography. The other body font (`Alegreya Sans`) is open-source OFL and ships freely.
+
+See [`app/static/fonts/README.md`](app/static/fonts/README.md) for the full sourcing + licensing breakdown.
+
+### Reboot
+
 Reboot once to bring up the kiosk:
 
 ```bash
