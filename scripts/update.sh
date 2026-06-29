@@ -68,6 +68,19 @@ else
     log "Updated: $LOCAL -> $(git rev-parse HEAD)"
 fi
 
+# Client-mode update — a Pi Zero (or other thin client) installed via
+# scripts/install-client.sh has no .venv and a ~/.palipints-client-url file.
+# The only thing to refresh is the kiosk launcher; Flask runs on the primary.
+if [ ! -d .venv ] && [ -f "$HOME/.palipints-client-url" ]; then
+    log "Client install detected — refreshing kiosk launcher only."
+    cp "$PROJECT_DIR/scripts/kiosk-autostart-client.sh" "$HOME/palipints-kiosk.sh"
+    chmod +x "$HOME/palipints-kiosk.sh"
+    log "Done. To pick up changes without rebooting:"
+    log "  pkill chromium || true"
+    log "  DISPLAY=:0 bash \$HOME/palipints-kiosk.sh &"
+    exit 0
+fi
+
 if [ ! -d .venv ]; then
     log "No .venv found. Run scripts/install.sh first."
     exit 1

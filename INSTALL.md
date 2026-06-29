@@ -100,9 +100,22 @@ The themes Palindrome 4, 5, and 6 use the commercial typeface **PP Fragment Glar
 - Free personal-use trial (sign-up required): https://pangrampangram.com/products/fragment-glare
 - Commercial licence (required for any customer-facing display): same page, "Buy" tab
 
-If the `.otf` is missing, themes 4-6 fall back to Google's `Archivo Black` automatically — the app still works, just without the licensed brand typography. The other body font (`Alegreya Sans`) is open-source OFL and ships freely.
+If the `.otf` is missing, themes 4-6 fall back to the locally-bundled `Archivo Black` automatically — the app still works, just without the licensed brand typography. All the other typefaces (Bebas Neue, Inter, Playfair Display, Caveat, Special Elite, Archivo Black, Alegreya Sans) are open-source OFL fonts bundled in the repo too — no internet required to render any theme.
 
 See [`app/static/fonts/README.md`](app/static/fonts/README.md) for the full sourcing + licensing breakdown.
+
+### Offline operation
+
+**The kiosk is fully offline-capable for normal day-to-day operation.** The display polls `/api/state` over the LAN, all images are cached on disk, all fonts are self-hosted (~1 MB under `app/static/fonts/`), and the SQLite DB is local. The Pi can be unplugged from the internet for days and the TV keeps showing taps, holidays, specials, events, and QR codes correctly.
+
+The features that **do** need internet are:
+
+- **Search the web** button on the Tap page (Untappd scrape)
+- **Auto-detect location** button on the Settings page (IP geolocation)
+- **Weekly sunrise/sunset refresh** for the Day/night auto-switch — the result is cached for 7 days so an outage that long would have to elapse before the day/night cutover times got stale
+- **External beer-library sync** if configured against a network source
+
+Everything else, including all typography, works untethered. This is intentional — the brewery shouldn't be at the mercy of a CDN or ISP for the menu board to look right.
 
 ### Reboot
 
@@ -234,3 +247,104 @@ Flask app crashed. Check the log: `journalctl --user -u palipints.service -n 100
 
 **Chromium uses too much RAM on a 2 GB Pi**
 Increase the swap in `/etc/dphys-swapfile` (`CONF_SWAPSIZE=1024`) and `sudo systemctl restart dphys-swapfile`. Long-term: a 4 GB Pi is more comfortable.
+
+---
+
+## 10. Second monitor (Pi Zero 2 W client)
+
+To add a second TV showing the same draft list, point a **second Pi** at the primary Pi's URL. This Pi runs nothing but a Chromium kiosk — no Flask, no database, no extra config to manage on the brewery side.
+
+The reference hardware for the second screen is a **Raspberry Pi Zero 2 W** (cheap, low-power, mini-HDMI), but any Pi works the same way.
+
+### 10.1 Hardware checklist
+
+- Raspberry Pi Zero 2 W (Zero 2 W has a quad-core CPU + 512 MB RAM — the original Zero is too slow for Chromium)
+- microSD card, 16 GB+, Class 10 / A1 or better
+- USB-C **micro-USB** power supply (the Zero takes micro-USB, not USB-C — easy to get wrong)
+- **mini-HDMI to HDMI** cable or adapter (the Zero 2 W has a mini-HDMI port; a regular HDMI cable won't fit)
+- Second TV with an HDMI input
+- WiFi reachable from the same network as the primary Pi (the Zero 2 W has no Ethernet)
+
+### 10.2 Flash the SD card
+
+Exactly the same flow as §2 with two changes when you click *Edit Settings* in Raspberry Pi Imager:
+
+- **Set hostname**: `palipints-client` (so it doesn't collide with the primary's `palipints`)
+- Everything else (username, WiFi, locale, SSH) — same as the primary.
+
+Boot the Zero 2 W with HDMI plugged into the second TV.
+
+### 10.3 SSH in and install
+
+```bash
+ssh pi@palipints-client.local
+sudo apt update && sudo apt full-upgrade -y
+git clone https://github.com/OktaneZA/PalinPints.git ~/PaliPints
+cd ~/PaliPints
+bash scripts/install-client.sh
+```
+
+The installer prompts for the **primary Pi's URL**. Defaults to `http://palipints.local:8080/`, which works on most home LANs via mDNS. If your router blocks mDNS or you prefer pinning to an IP, paste `http://<primary-pi-ip>:8080/` instead — find the primary's IP via your router's admin page or `ssh pi@palipints.local 'hostname -I'`.
+
+The installer skips Python, Flask, the venv, and the systemd service — only Chromium and a kiosk autostart are configured. Takes about a minute.
+
+Reboot to bring up the kiosk:
+
+```bash
+sudo reboot
+```
+
+Both TVs should now show the identical PaliPints display.
+
+### 10.4 Changing the primary URL later
+
+The URL the kiosk targets lives in **`~/.palipints-client-url`** on the client. To repoint:
+
+```bash
+ssh pi@palipints-client.local
+nano ~/.palipints-client-url        # edit the URL line, save
+sudo reboot                          # or: pkill chromium; DISPLAY=:0 bash ~/palipints-kiosk.sh &
+```
+
+The `install-client.sh` script does not need to be re-run.
+
+### 10.5 Updating
+
+```bash
+ssh pi@palipints-client.local
+cd ~/PaliPints
+bash scripts/update.sh
+```
+
+`update.sh` auto-detects the client install (no `.venv` + `~/.palipints-client-url` present) and refreshes only the kiosk launcher script. No code refresh needed — the display HTML/CSS/JS is fetched from the primary on every boot.
+
+### 10.6 Page rotation drift
+
+The two TVs run their own Chromium instances with independent page-rotation timers, so on long tap lists the screens can drift out of sync over time (e.g. TV A on page 2, TV B on page 1). This is expected — synced rotation is on the roadmap but not yet implemented. If drift bothers you, set `Beers per page` high enough to avoid pagination, or reboot both Pis together so they restart in lockstep.
+
+### 10.7 Troubleshooting
+
+**Black screen / Chromium shows "This site can't be reached"**
+The client can't reach the primary. SSH in and:
+
+```bash
+cat ~/.palipints-client-url                # check the configured URL
+curl -fsS "$(cat ~/.palipints-client-url)" -o /dev/null && echo OK || echo UNREACHABLE
+ping -c 3 palipints.local                  # mDNS resolution test
+```
+
+If `ping` fails on `palipints.local` but the primary is up, your network is blocking mDNS — change the URL file to use the primary's IP address.
+
+**Chromium is sluggish on the Zero 2 W**
+The Zero 2 W has only 512 MB RAM. The display page is moderate but Chromium itself is heavy. If it stutters during page rotation:
+- Increase swap (`/etc/dphys-swapfile` → `CONF_SWAPSIZE=1024` → `sudo systemctl restart dphys-swapfile`).
+- Bump `Beers per page` on the Settings page so fewer rotations happen.
+- Long-term: a Pi 3 / Pi 4 makes a happier client.
+
+**Updating the primary doesn't change the client display**
+Press `Ctrl+Shift+R` in the kiosk window (via `xdotool`) or reboot the client. The display polls `/api/state` every 5 s and re-renders on state changes, but a full page reload picks up any CSS/HTML edits too.
+
+```bash
+ssh pi@palipints-client.local
+DISPLAY=:0 xdotool search --name "Chromium" key --window %@ ctrl+shift+r
+```

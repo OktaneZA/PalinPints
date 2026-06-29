@@ -33,6 +33,7 @@ fi
 
 exec "$BROWSER" \
   --kiosk \
+  --incognito \
   --noerrdialogs \
   --disable-infobars \
   --disable-session-crashed-bubble \

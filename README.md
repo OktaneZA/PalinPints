@@ -40,6 +40,10 @@ bash scripts/install.sh
 
 Update later with `bash scripts/update.sh`.
 
+### Multiple displays
+
+To drive a second TV from a separate Pi (typically a **Pi Zero 2 W**), run [`scripts/install-client.sh`](scripts/install-client.sh) on the second Pi instead of `install.sh`. The client installer skips Python / Flask / systemd entirely — it only configures a Chromium kiosk pointed at the primary Pi's URL. The two TVs mirror identical content (page rotation runs independently per screen). Full walkthrough in **[INSTALL.md §10](INSTALL.md)**.
+
 ## Style categories
 
 - IPA & Pale Ales
@@ -76,7 +80,7 @@ There is a single toggle on the Settings page — **Switch theme automatically b
 
 ## Brand fonts
 
-The Palindrome 4 / 5 / 6 themes use **PP Fragment Glare ExtraBold** for headings and **Alegreya Sans** for body text. Files live under [`app/static/fonts/`](app/static/fonts/) with a [README](app/static/fonts/README.md) explaining the licensing — PP Fragment Glare is a commercial Pangram Pangram typeface and a free personal-use trial is available [here](https://pangrampangram.com/products/fragment-glare). If a font file is missing, the themes fall back to `Archivo Black` / `Inter` via Google Fonts so the app keeps rendering.
+Every typeface the app uses is **self-hosted** under [`app/static/fonts/`](app/static/fonts/) — the display loads no fonts from any CDN at runtime. The Palindrome 4 / 5 / 6 themes use **PP Fragment Glare ExtraBold** for headings (commercial Pangram Pangram font — free personal-use trial available [here](https://pangrampangram.com/products/fragment-glare)) and **Alegreya Sans** for body. Other themes use Bebas Neue, Inter, Playfair Display, Caveat, Special Elite, or Archivo Black — all bundled as open-source `.woff2` files. See the [fonts README](app/static/fonts/README.md) for the full inventory and licensing.
 
 ## Branding
 

@@ -5,7 +5,7 @@
 Palindrome Brewing Co needs a digital draft list shown on a horizontally-mounted TV driven by a Raspberry Pi. Two surfaces:
 
 1. **Admin web app** — a local-network site for staff to manage taps, prices, specials, and display settings.
-2. **TV display app** — a fullscreen page rendered in Chromium kiosk mode that shows the current draft list, grouped by beer style category, with a rotating multi-page layout when there are more taps than fit on one page.
+2. **TV display app** — a fullscreen page rendered in Chromium kiosk mode that shows the current draft list, grouped by beer style category, with a rotating multi-page layout when there are more taps than fit on one page. One primary Pi hosts the Flask app and drives one TV; additional read-only client Pis (e.g. a Pi Zero 2 W) can mirror the same display on extra TVs by running a thin Chromium kiosk pointed at the primary's LAN URL — no extra services or code on the client.
 
 The system should make day-to-day tap turnover fast: type a beer name, let it autofill from a web lookup, tweak if needed, save — the TV updates within seconds.
 
@@ -195,3 +195,5 @@ Event URLs are rendered as scannable QR codes server-side via the `/qr?data=…`
 - **Storage**: SQLite file at `data/palipints.db`. Images on disk under `data/images/` (`breweries/`, `uploads/`, `beers/`).
 - **Schema migrations**: additive only, applied lazily on `init_db()`. Existing rows are backfilled where it preserves user intent (e.g. `day_night_auto = 1` when an install already had distinct day/night themes).
 - **Trust boundary**: LAN-only. No authentication or CSRF protection on admin routes; do not expose this app to the public internet.
+- **Multi-display**: one primary Pi hosts the Flask service; N read-only kiosk clients on the same LAN render the same `/` URL. The primary's URL is stored on each client in `~/.palipints-client-url`. Clients run Chromium only — no Flask, no DB, no app code execution. Page-rotation timers are per-client so screens may drift; synchronised rotation is explicitly **not** a requirement at this stage.
+- **Offline operation**: the display and admin must work fully without internet. All typefaces are self-hosted under `app/static/fonts/` (no Google Fonts CDN at runtime), all images are cached on disk after a one-time download, holidays/QR codes are generated locally, and the SQLite DB is local. Internet is only required for opt-in features the operator triggers explicitly (web search, IP geolocation, the weekly sunrise/sunset refresh, and any networked beer-library source). The kiosk also uses `--incognito` so no browser cache accumulates between sessions — combined with self-hosted fonts, every Chromium relaunch renders correctly even with the WAN unavailable.
