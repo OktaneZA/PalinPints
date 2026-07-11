@@ -38,6 +38,9 @@ THEME_HOP_FALLBACK: dict[str, str] = {
     "palindrome4": "img/hop-green.svg",
     "palindrome5": "img/hop-green.svg",
     "palindrome6": "img/hop-black.svg",
+    "newsprint":   "img/hop-black.svg",   # dark ink on cream stock
+    "terminal":    "img/hop-outline.svg", # thin outline reads on black
+    "editorial":   "img/hop-black.svg",   # black hop on white paper
 }
 
 DEFAULT_CATEGORY_COLORS = {

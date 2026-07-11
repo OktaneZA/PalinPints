@@ -251,7 +251,7 @@ def save_all_taps():
 _TAP_ORDER_MODES = {"tap_number", "style_category", "home_first"}
 _EXTERNAL_DB_SOURCES = {"mock", "postgres"}
 
-_ALLOWED_THEMES = {"marble", "neon", "chalkboard", "palindrome1", "palindrome2", "palindrome3", "palindrome4", "palindrome5", "palindrome6"}
+_ALLOWED_THEMES = {"marble", "neon", "chalkboard", "palindrome1", "palindrome2", "palindrome3", "palindrome4", "palindrome5", "palindrome6", "newsprint", "terminal", "editorial"}
 
 
 @bp.route("/beer-library", methods=["GET"])
