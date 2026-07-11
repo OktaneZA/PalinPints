@@ -107,34 +107,121 @@ def _cache_set(key: str, payload: dict[str, Any]) -> None:
     get_db().commit()
 
 
-def search_beers(query: str, limit: int = 5) -> tuple[list[BeerHit], str | None]:
-    """Search Untappd and return up to `limit` parsed search-result hits.
+_ALGOLIA_CONFIG_CACHE: dict[str, Any] | None = None
+_ALGOLIA_CONFIG_EXPIRY: float = 0.0
 
-    Returns (results, error). Each hit has basic info from the search page;
-    call `fetch_beer_detail(slug)` to resolve location/IBU/logo on pick.
+
+def _get_algolia_config() -> dict[str, str] | None:
+    """Return {'appId', 'searchKey'} used by Untappd's Algolia search.
+
+    Untappd stopped server-rendering search results — the beer search page is
+    now a small JS shell that queries Algolia client-side. The Algolia app ID
+    and search-only API key are exposed in a `window.UNTAPPD_SEARCH_CONFIG`
+    JSON blob on every /search page load. We fetch it once every 24 h and
+    cache in memory, so a query pass is 1 Algolia POST rather than an HTML
+    scrape."""
+    global _ALGOLIA_CONFIG_CACHE, _ALGOLIA_CONFIG_EXPIRY
+    now = time.time()
+    if _ALGOLIA_CONFIG_CACHE and now < _ALGOLIA_CONFIG_EXPIRY:
+        return _ALGOLIA_CONFIG_CACHE
+    try:
+        html = _polite_get("https://untappd.com/search")
+    except httpx.HTTPError:
+        return None
+    m = re.search(r"window\.UNTAPPD_SEARCH_CONFIG\s*=\s*(\{.+?\});", html, re.DOTALL)
+    if not m:
+        return None
+    try:
+        cfg = json.loads(m.group(1))
+    except json.JSONDecodeError:
+        return None
+    app_id = cfg.get("appId")
+    search_key = cfg.get("searchKey")
+    if not (app_id and search_key):
+        return None
+    _ALGOLIA_CONFIG_CACHE = {"appId": app_id, "searchKey": search_key}
+    _ALGOLIA_CONFIG_EXPIRY = now + 24 * 3600
+    return _ALGOLIA_CONFIG_CACHE
+
+
+def _hit_from_algolia(record: dict[str, Any]) -> BeerHit | None:
+    """Map one Algolia beer index hit to our BeerHit dataclass. Skips
+    records that don't have the two fields needed to build a beer-page slug.
+
+    Field mapping (from Algolia's `beer` index):
+      untappd_slug     = `{beer_slug}/{bid}`         used for the beer page URL
+      beer_name        = beer_name
+      brewery          = brewery_name
+      sub_style        = type_name (e.g. "IPA - New England / Hazy")
+      abv              = beer_abv                     numeric %
+      ibu              = beer_ibu                     0 = often "unmeasured"
+      brewery_logo_url = brewery_label                filled in on search hit
+                                                      so we don't need a
+                                                      second HTTP round trip
+      thumbnail_url    = beer_label_hd or beer_label  HD preferred; the
+                                                      _sm URL is a fallback
     """
+    beer_slug = (record.get("beer_slug") or "").strip()
+    bid = record.get("bid")
+    if not (beer_slug and bid):
+        return None
+    thumbnail = (record.get("beer_label_hd") or record.get("beer_label") or "").strip()
+    return BeerHit(
+        untappd_slug=f"{beer_slug}/{bid}",
+        beer_name=(record.get("beer_name") or "").strip() or None,
+        brewery=(record.get("brewery_name") or "").strip() or None,
+        sub_style=(record.get("type_name") or "").strip() or None,
+        abv=record.get("beer_abv") if record.get("beer_abv") is not None else None,
+        ibu=int(record["beer_ibu"]) if record.get("beer_ibu") is not None else None,
+        brewery_logo_url=(record.get("brewery_label") or "").strip() or None,
+        thumbnail_url=thumbnail or None,
+    )
+
+
+def search_beers(query: str, limit: int = 5) -> tuple[list[BeerHit], str | None]:
+    """Search Untappd via its public Algolia search index. Returns
+    (results, error). Basic info only — call `fetch_beer_detail(slug)` on the
+    picked hit to resolve full location / brewery logo."""
     query = query.strip()
     if not query:
         return [], "empty query"
 
-    cache_key = f"search_multi:{query.lower()}:{limit}"
+    # v2 = Algolia-backed. Bump if the response shape ever changes so we
+    # don't hand back cached garbage from the old HTML scraper.
+    cache_key = f"search_multi:v2:{query.lower()}:{limit}"
     cached = _cache_get(cache_key)
     if cached:
         return [BeerHit(**h) for h in cached.get("results", [])], cached.get("error")
 
+    cfg = _get_algolia_config()
+    if not cfg:
+        return [], "search config unavailable"
+
+    url = f"https://{cfg['appId'].lower()}-dsn.algolia.net/1/indexes/beer/query"
+    headers = {
+        "X-Algolia-Application-Id": cfg["appId"],
+        "X-Algolia-API-Key": cfg["searchKey"],
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": USER_AGENT,
+    }
+    # Algolia's `params` is a URL-encoded string.
+    params = httpx.QueryParams({"query": query, "hitsPerPage": limit})
+    body = {"params": str(params)}
+
     try:
-        search_html = _polite_get(
-            f"https://untappd.com/search?q={httpx.QueryParams({'q': query})['q']}"
-        )
+        with httpx.Client(timeout=TIMEOUT, verify=_SSL_CONTEXT) as client:
+            resp = client.post(url, headers=headers, json=body)
+            resp.raise_for_status()
+            data = resp.json()
     except httpx.HTTPError as e:
         return [], f"search request failed: {e}"
+    except json.JSONDecodeError:
+        return [], "search response was not valid JSON"
 
-    soup = BeautifulSoup(search_html, "html.parser")
-    items = _find_beer_result_items(soup)
     results: list[BeerHit] = []
-    for item in items[:limit]:
-        hit = _parse_search_result(item)
-        if hit and hit.untappd_slug:
+    for record in data.get("hits", [])[:limit]:
+        hit = _hit_from_algolia(record)
+        if hit:
             results.append(hit)
 
     err = None if results else "no beer results found"
@@ -161,74 +248,6 @@ def fetch_beer_detail(slug: str) -> BeerHit:
 
     hit = _parse_beer_page(beer_html, beer_url)
     _cache_set(cache_key, asdict(hit))
-    return hit
-
-
-def _find_beer_result_items(soup: BeautifulSoup):
-    """Return a list of search result containers."""
-    for sel in [
-        "div.beer-item",
-        "div.search-result",
-        "li.beer-item",
-    ]:
-        items = soup.select(sel)
-        if items:
-            return items
-    # Fallback: each beer link is wrapped in something — group by parent.
-    seen_parents = []
-    for a in soup.select("a[href^='/b/']"):
-        parent = a.find_parent(["div", "li", "section"]) or a
-        if parent not in seen_parents:
-            seen_parents.append(parent)
-    return seen_parents
-
-
-def _parse_search_result(item) -> BeerHit | None:
-    """Pull basic fields out of a single search-result container."""
-    a = item.select_one("p.name a[href^='/b/']") or item.select_one("a[href^='/b/']")
-    if not a or not a.get("href"):
-        return None
-    href = a["href"]
-    slug_match = re.search(r"/b/([^/?#]+/\d+)", href)
-    if not slug_match:
-        return None
-
-    hit = BeerHit(untappd_slug=slug_match.group(1))
-    hit.beer_name = a.get_text(strip=True) or None
-
-    brewery_a = item.select_one("p.brewery a") or item.select_one(".brewery a")
-    if brewery_a:
-        hit.brewery = brewery_a.get_text(strip=True)
-        m = re.search(r"/([^/]+)$", brewery_a.get("href", "").rstrip("/"))
-        if m:
-            hit.brewery_slug = m.group(1)
-    else:
-        em = item.select_one("p.name em") or item.select_one("em")
-        if em:
-            hit.brewery = em.get_text(strip=True)
-
-    style_el = item.select_one("p.style") or item.select_one(".style")
-    if style_el:
-        hit.sub_style = style_el.get_text(strip=True)
-
-    text = item.get_text(" ", strip=True)
-    abv_m = re.search(r"([\d.]+)\s*%\s*ABV", text, re.IGNORECASE)
-    if abv_m:
-        try:
-            hit.abv = float(abv_m.group(1))
-        except ValueError:
-            pass
-    ibu_m = re.search(r"([\d.]+)\s*IBU", text, re.IGNORECASE)
-    if ibu_m:
-        try:
-            hit.ibu = int(float(ibu_m.group(1)))
-        except ValueError:
-            pass
-
-    img = item.select_one("img")
-    if img and img.get("src"):
-        hit.thumbnail_url = img["src"]
-
     return hit
 
 
