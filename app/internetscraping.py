@@ -349,11 +349,6 @@ def _location_from_selectors(soup: BeautifulSoup) -> str | None:
     return None
 
 
-# Backwards-compatible shim — older callers expected just the logo URL.
-def _fetch_brewery_logo_url(brewery_slug: str) -> str | None:
-    return _fetch_brewery_info(brewery_slug).get("logo_url")
-
-
 def brewery_name_slug(brewery_name: str | None) -> str:
     """Canonical slug derived from a brewery's display name. The same string is
     used as the cache key on both write (download) and read (display)."""

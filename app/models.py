@@ -73,7 +73,7 @@ def update_tap(tap_number: int, values: dict[str, Any]) -> None:
         "price_third", "price_half", "price_pint", "price_takeaway",
         "price_third_enabled", "price_half_enabled",
         "price_pint_enabled", "price_takeaway_enabled",
-        "color_override", "image_override_path", "untappd_slug",
+        "image_override_path", "untappd_slug",
         "library_external_id",
     }
     fields = [(k, v) for k, v in values.items() if k in allowed]
@@ -92,7 +92,7 @@ def clear_tap(tap_number: int) -> None:
            price_third=NULL, price_half=NULL, price_pint=NULL, price_takeaway=NULL,
            price_third_enabled=0, price_half_enabled=0,
            price_pint_enabled=0, price_takeaway_enabled=0,
-           color_override=NULL, image_override_path=NULL, untappd_slug=NULL,
+           image_override_path=NULL, untappd_slug=NULL,
            library_external_id=NULL
            WHERE tap_number = ?""",
         (tap_number,),
@@ -194,8 +194,9 @@ def is_home_brewery(tap_brewery: str | None, home_brewery: str | None) -> bool:
 
 
 def color_for_tap(tap: dict[str, Any], settings: dict[str, Any]) -> str:
-    if tap.get("color_override"):
-        return tap["color_override"]
+    """Beer-color-disc colour for a tap. Falls back to the category default
+    when the style_category is missing/unknown. (The per-tap `color_override`
+    UI was removed; a stale DB column still exists but is never populated.)"""
     field = CATEGORY_TO_COLOR_FIELD.get(tap.get("style_category") or "")
     if field:
         return settings[field]

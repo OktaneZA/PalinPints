@@ -22,21 +22,25 @@ from .sync_worker import trigger_sync
 bp = Blueprint("api", __name__, url_prefix="/admin/api")
 
 
-def _public_hit(hit) -> dict:
+def _public_hit(hit, settings=None) -> dict:
+    """Serialise a BeerHit for the JSON API. Pass `settings` when calling in
+    a loop to avoid re-fetching them per hit — otherwise they're loaded
+    lazily on the first hit that has a brewery."""
     payload = asdict(hit)
     payload["source_slug"] = payload.pop("untappd_slug", None)
-    _apply_home_brewery_location(payload)
+    _apply_home_brewery_location(payload, settings)
     return payload
 
 
-def _apply_home_brewery_location(payload: dict) -> None:
+def _apply_home_brewery_location(payload: dict, settings=None) -> None:
     """Replace the scraped location with the configured home-brewery location
     when the hit's brewery is recognised as the home brewery. Untappd's data
     for many breweries is incomplete (e.g. ' England' for Palindrome) — the
     operator's own setting is the source of truth for their own beers."""
     if not payload.get("brewery"):
         return
-    settings = get_settings()
+    if settings is None:
+        settings = get_settings()
     if is_home_brewery(payload.get("brewery"), settings.get("home_brewery")):
         home_loc = (settings.get("home_brewery_location") or "").strip()
         if home_loc:
@@ -67,10 +71,13 @@ def web_search():
         limit = 5
 
     results, err = search_beers(query, limit=limit)
+    # One settings lookup for the whole batch — the home-brewery override
+    # runs on every hit and only reads settings.home_brewery(_location).
+    settings = get_settings()
     return jsonify({
         "query": query,
         "error": err,
-        "results": [_public_hit(h) for h in results],
+        "results": [_public_hit(h, settings) for h in results],
     })
 
 
@@ -85,7 +92,7 @@ def web_select():
     thumbnail_url = (request.args.get("thumbnail_url") or "").strip() or None
 
     hit = fetch_beer_detail(slug)
-    payload = _public_hit(hit)
+    payload = _public_hit(hit, get_settings())
     if hit.brewery_logo_url and hit.brewery and not hit.error:
         rel = download_brewery_logo(hit.brewery, hit.brewery_logo_url)
         payload["brewery_logo_local"] = rel

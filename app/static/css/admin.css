@@ -56,6 +56,68 @@ main { max-width: 1100px; margin: 0 auto; padding: 24px; }
 h1 { margin-top: 0; }
 .hint { color: var(--muted); margin-top: -8px; }
 
+/* Page header row — title + a right-aligned pill counter. Used by
+   Events, Specials to expose "N / limit" or "N specials" at a glance. */
+.page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.slot-counter {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.slot-counter.is-full {
+  background: var(--danger);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Add-form emphasis — surface-soft background so the composer stands
+   apart from the row list below it. */
+.add-form.special-form {
+  background: var(--surface-soft);
+  border-left: 3px solid var(--accent);
+}
+
+/* Empty-state panel used on Events + Specials when there's nothing to
+   show. Softer than a plain "No items" line, and points the eye back
+   to the Add form. */
+.empty-panel {
+  padding: 20px 24px;
+  background: var(--surface-soft);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  margin-bottom: 14px;
+}
+.empty-panel p { margin: 0; }
+.empty-panel p + p { margin-top: 6px; }
+
+/* Warning banner — surfaced on Events when the limit is hit. */
+.banner {
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.banner-warn {
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface-soft));
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
+  color: var(--fg);
+}
+.banner-warn strong { color: var(--danger); }
+
 /* Shared focus + transition for every interactive form control. Per-section
    selectors below already set padding/border/background; this layer adds
    the focus ring + a soft animated border. */

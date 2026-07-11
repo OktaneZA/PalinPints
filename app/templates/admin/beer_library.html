@@ -21,11 +21,7 @@
     <div>
       <div class="bl-sync-label">Last sync</div>
       <div class="bl-sync-value" data-bl-last-sync>
-        {% if settings.external_db_last_sync_at %}
-          {{ settings.external_db_last_sync_at }}
-        {% else %}
-          never
-        {% endif %}
+        {{ settings.external_db_last_sync_at | epoch_local if settings.external_db_last_sync_at else 'never' }}
       </div>
     </div>
     <div class="bl-sync-status-wrap">
@@ -162,11 +158,7 @@
 
 <div class="sticky-save-bar">
   <button type="button" class="btn btn-primary" data-bl-sync-now>Sync now</button>
-  <span class="sticky-save-status" data-bl-sync-status>
-    {% if settings.external_db_last_sync_status %}
-      Last sync: {{ settings.external_db_last_sync_status }}
-    {% endif %}
-  </span>
+  <span class="sticky-save-status" data-bl-sync-status></span>
 </div>
 
 <script>

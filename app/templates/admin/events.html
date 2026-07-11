@@ -1,14 +1,19 @@
 {% extends "admin/_base.html" %}
 {% block title %}Events · PaliPints{% endblock %}
 {% block content %}
-<h1>Events</h1>
+<div class="page-header">
+  <h1>Events</h1>
+  <span class="slot-counter {% if events|length >= event_limit %}is-full{% endif %}">
+    {{ events|length }} / {{ event_limit }} used
+  </span>
+</div>
 <p class="hint">
   Events show under Specials in the top-right of the TV display. The URL becomes a QR code customers can scan.
-  Maximum {{ event_limit }} events. Inactive events stay saved but don't appear on the display.
+  Inactive events stay saved but don't appear on the display.
 </p>
 
 {% if events|length < event_limit %}
-<form method="post" class="special-form event-form">
+<form method="post" class="special-form event-form add-form">
   <h2>Add event</h2>
   <label>Name <input type="text" name="name" required placeholder="e.g. Friday tap takeover"></label>
   <label>Date <input type="date" name="event_date"></label>
@@ -17,12 +22,17 @@
   <button type="submit" class="btn btn-primary">Add</button>
 </form>
 {% else %}
-<p class="muted">Maximum of {{ event_limit }} events reached. Remove one to add another.</p>
+<div class="banner banner-warn">
+  <strong>Maximum reached.</strong> Delete an event below to add another — the display renders at most {{ event_limit }} at once.
+</div>
 {% endif %}
 
 <h2>Current events</h2>
 {% if not events %}
-  <p class="muted">No events yet.</p>
+  <div class="empty-panel">
+    <p><strong>No events yet.</strong></p>
+    <p class="muted">Add an event above — it'll appear under Specials on the TV display with a QR code customers can scan.</p>
+  </div>
 {% endif %}
 
 {# Hidden per-row delete forms — siblings of the master form so they can be

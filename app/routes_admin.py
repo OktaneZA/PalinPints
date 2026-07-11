@@ -329,7 +329,7 @@ def settings():
             external_source = "mock"
 
         values = {
-            "home_brewery": f.get("home_brewery") or "Palindrome Brewing Co",
+            "home_brewery": (f.get("home_brewery") or "").strip() or "Palindrome Brewing Co",
             "home_brewery_location": (f.get("home_brewery_location") or "").strip() or "London, UK",
             "display_style": "color" if f.get("display_style") == "color" else "logo",
             "display_scale": display_scale,
@@ -376,7 +376,6 @@ def settings():
     return render_template(
         "admin/settings.html",
         settings=get_settings(),
-        categories=STYLE_CATEGORIES,
         backup=backup_info(),
         holiday_labels=HOLIDAY_LABELS,
     )

@@ -564,13 +564,24 @@
         const r = await fetch('/admin/api/beer-library/status');
         const data = await r.json();
         if (data.last_sync_at && data.last_sync_at >= startSec) {
-          if (blLastSync) blLastSync.textContent = data.last_sync_at;
+          if (blLastSync) blLastSync.textContent = formatEpochLocal(data.last_sync_at);
           if (blLastStatus) blLastStatus.textContent = data.last_sync_status || '—';
           return;
         }
       } catch {}
       await new Promise(res => setTimeout(res, 700));
     }
+  }
+
+  // Mirror the Jinja `epoch_local` filter — "Sat 11 Jul 15:03".
+  function formatEpochLocal(sec) {
+    if (!sec) return '—';
+    const d = new Date(sec * 1000);
+    if (isNaN(d.getTime())) return String(sec);
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${days[d.getDay()]} ${pad(d.getDate())} ${months[d.getMonth()]} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   // Inline edit toggles on the library page.

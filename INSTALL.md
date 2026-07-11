@@ -288,6 +288,8 @@ The installer prompts for the **primary Pi's URL**. Defaults to `http://palipint
 
 The installer skips Python, Flask, the venv, and the systemd service — only Chromium and a kiosk autostart are configured. Takes about a minute.
 
+**What runs at boot:** the autostart entry launches `~/palipints-kiosk.sh`, which waits up to 60 s for the primary to be reachable (retries `curl` once a second), then starts Chromium with `--kiosk --incognito` at the URL from `~/.palipints-client-url`. Incognito means no persistent browser cache, cookies, or history builds up over weeks of uptime — every kiosk session is clean and the display re-fetches CSS/JS on boot.
+
 Reboot to bring up the kiosk:
 
 ```bash

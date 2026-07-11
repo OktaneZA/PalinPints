@@ -67,9 +67,9 @@
       <label>IBU
         <input type="number" step="1" name="ibu" value="{{ tap.ibu if tap.ibu is not none else '' }}" data-field="ibu">
       </label>
-      {% set tap_brewery_lc = (tap.brewery or settings.home_brewery or '')|lower %}
-      {% set home_brewery_lc = (settings.home_brewery or '')|lower %}
-      {% set is_home_tap = home_brewery_lc and tap_brewery_lc == home_brewery_lc %}
+      {# Match Python's is_home_brewery() word-boundary prefix semantics
+         so "Palindrome" and "Palindrome Brewing Co" both count as home. #}
+      {% set is_home_tap = is_home_brewery(tap.brewery or settings.home_brewery, settings.home_brewery) %}
       <label>Location
         <input type="text" name="location"
                value="{{ tap.location if tap.location else (settings.home_brewery_location if is_home_tap else '') }}"

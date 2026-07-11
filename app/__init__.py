@@ -149,6 +149,30 @@ def create_app() -> Flask:
         except Exception:
             return {"active_theme": "palindrome1"}
 
+    # Jinja filter: format a Unix epoch integer as a friendly local
+    # "day-of-week, DD mon HH:MM" string. Used by the Beer library and
+    # anywhere else we surface a stored sync/backup timestamp.
+    import datetime as _dt
+
+    @app.template_filter("epoch_local")
+    def _epoch_local(value):
+        if value is None or value == "":
+            return "—"
+        try:
+            ts = int(value)
+        except (TypeError, ValueError):
+            return str(value)
+        try:
+            return _dt.datetime.fromtimestamp(ts).strftime("%a %d %b %H:%M")
+        except (OSError, ValueError, OverflowError):
+            return str(value)
+
+    # Expose the shared is_home_brewery() predicate to templates so the
+    # admin's home-brewery detection is consistent with the display's
+    # (case-insensitive word-boundary prefix match, not strict equality).
+    from .models import is_home_brewery as _is_home_brewery
+    app.jinja_env.globals["is_home_brewery"] = _is_home_brewery
+
     from .sync_worker import start_sync_worker
     start_sync_worker(app)
 
