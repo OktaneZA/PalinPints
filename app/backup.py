@@ -143,8 +143,9 @@ def _sqlite_copy(src_path: Path, dst_path: Path) -> None:
         src.close()
 
 
-def restore_from_backup() -> dict:
-    """Replace the current DB with the backup.
+def restore_from_backup(source: Path = BACKUP_PATH) -> dict:
+    """Replace the current DB with the backup (or another snapshot file,
+    e.g. one downloaded from Google Drive).
 
     Caller is expected to invalidate any open DB connections (Flask's
     teardown handlers will reopen on the next request). The current DB
@@ -157,12 +158,12 @@ def restore_from_backup() -> dict:
     will be serialised by SQLite's locking instead of seeing a torn file.
     """
     _ensure_dirs()
-    if not BACKUP_PATH.exists():
+    if not source.exists():
         return {"ok": False, "error": "no backup to restore"}
 
     # Validate the backup before touching the live DB.
     try:
-        check = sqlite3.connect(str(BACKUP_PATH))
+        check = sqlite3.connect(str(source))
         row = check.execute("PRAGMA integrity_check").fetchone()
         check.close()
         if row is None or row[0] != "ok":
@@ -183,15 +184,15 @@ def restore_from_backup() -> dict:
 
             # Restore: write the backup pages into the live DB file via
             # the online backup API. Goes through SQLite's locking.
-            _sqlite_copy(BACKUP_PATH, DB_PATH)
+            _sqlite_copy(source, DB_PATH)
         except (sqlite3.Error, OSError) as e:
             log.exception("restore failed")
             return {"ok": False, "error": f"restore error: {e}"}
 
-    log.info("restored DB from %s; previous DB saved to %s", BACKUP_PATH, PRE_RESTORE_PATH)
+    log.info("restored DB from %s; previous DB saved to %s", source, PRE_RESTORE_PATH)
     return {
         "ok": True,
-        "restored_from": str(BACKUP_PATH),
+        "restored_from": str(source),
         "pre_restore_path": str(PRE_RESTORE_PATH),
         "restored_at": int(time.time()),
     }

@@ -3,6 +3,7 @@
 A single daemon thread handles two periodic jobs:
   1. Beer-library sync (interval-driven by ``external_db_sync_interval_minutes``).
   2. Weekly DB backup (every 7 days).
+  3. Weekly off-site backup to Google Drive, once it's connected.
 
 Boot behaviour: both run once on startup if due (sync always runs;
 backup runs only if no backup exists yet, so first-time installs get
@@ -17,6 +18,7 @@ from __future__ import annotations
 import logging
 import threading
 
+from . import offsite
 from .backup import backup_now, should_backup
 from .beer_library import should_run, sync_now
 from .models import get_settings
@@ -75,6 +77,7 @@ def _worker_loop(app) -> None:
 
         # Always check backup cadence on every wake — cheap stat() call.
         _safe_backup(app)
+        _safe_offsite()
 
 
 def _safe_sync(app, force: bool) -> None:
@@ -97,3 +100,16 @@ def _safe_backup(app) -> None:
             log.warning("DB backup: %s", result.get("error", "unknown"))
     except Exception:  # noqa: BLE001 — never let the worker die
         log.exception("DB backup failed unexpectedly")
+
+
+def _safe_offsite() -> None:
+    try:
+        if not offsite.should_run():
+            return
+        result = offsite.backup_now()
+        if result.get("ok"):
+            log.info("off-site backup: ok (%s)", result.get("name"))
+        else:
+            log.warning("off-site backup: %s", result.get("error", "unknown"))
+    except Exception:  # noqa: BLE001 — never let the worker die
+        log.exception("off-site backup failed unexpectedly")

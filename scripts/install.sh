@@ -43,7 +43,7 @@ sudo apt-get install -y --no-install-recommends \
     python3 python3-venv python3-pip \
     libjpeg-dev zlib1g-dev \
     "$CHROMIUM_PKG" xdotool unclutter \
-    curl ca-certificates
+    curl ca-certificates rclone
 
 # 2. Python venv
 log "Creating Python virtualenv..."

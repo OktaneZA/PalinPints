@@ -256,6 +256,63 @@
     </div>
   </fieldset>
 
+  <fieldset data-offsite>
+    <legend>Google Drive backup</legend>
+    <p class="hint">
+      Once connected, a copy of the database and images is uploaded to a
+      <strong>PaliPints</strong> folder in your Google Drive every week. The
+      newest 4 copies are kept. PaliPints can only see files it creates,
+      not the rest of your Drive.
+    </p>
+    <p class="muted" data-offsite-loading>Checking Google Drive…</p>
+
+    <div data-offsite-state="not-installed" hidden>
+      <p class="muted">
+        rclone isn't installed on this Pi. Over SSH, run
+        <code>sudo apt-get install -y rclone</code>, then reload this page.
+      </p>
+    </div>
+
+    <div data-offsite-state="disconnected" hidden>
+      <div class="backup-actions">
+        <button type="button" class="btn btn-secondary" data-offsite-connect>Connect Google Drive</button>
+      </div>
+      <ol class="offsite-steps" data-offsite-steps hidden>
+        <li>
+          <a href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm" data-offsite-auth-link>Sign in with Google ↗</a>
+          and click <strong>Allow</strong>.
+        </li>
+        <li>
+          Your browser then shows a page that <strong>can't load</strong>
+          (an address starting <code>http://127.0.0.1:53682/</code>). That's
+          expected. Copy the whole address from the address bar and paste it here:
+          <div class="offsite-paste">
+            <input type="url" data-offsite-paste placeholder="http://127.0.0.1:53682/?state=…&amp;code=…" autocomplete="off">
+            <button type="button" class="btn btn-primary" data-offsite-finish>Finish</button>
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <div data-offsite-state="connected" hidden>
+      <p class="muted">
+        <strong class="offsite-ok">✓ Connected</strong>
+        · Last upload: <strong data-offsite-last>never</strong>
+      </p>
+      <p class="backup-status error" data-offsite-error hidden></p>
+      <table class="offsite-list" data-offsite-list hidden>
+        <thead><tr><th>Copy in Drive</th><th>Size</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="backup-actions">
+        <button type="button" class="btn btn-secondary" data-offsite-now>Back up to Drive now</button>
+        <button type="button" class="btn btn-secondary" data-offsite-disconnect>Disconnect</button>
+      </div>
+    </div>
+
+    <span class="backup-status" data-offsite-status></span>
+  </fieldset>
+
   <div class="sticky-save-bar">
     <button type="submit" class="btn btn-primary">Save settings</button>
   </div>

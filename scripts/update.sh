@@ -90,6 +90,13 @@ log "Refreshing Python dependencies..."
 .venv/bin/pip install --upgrade --quiet pip wheel
 .venv/bin/pip install --upgrade --quiet -r requirements.txt
 
+# rclone powers the Google Drive backup (Settings page). Older installs
+# predate it, so pull it in once.
+if ! command -v rclone >/dev/null; then
+    log "Installing rclone for Google Drive backups (sudo required)..."
+    sudo apt-get install -y --no-install-recommends rclone || log "rclone install failed — Drive backup will be unavailable."
+fi
+
 log "Restarting service..."
 systemctl --user restart palipints.service
 

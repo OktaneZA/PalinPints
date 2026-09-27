@@ -769,4 +769,158 @@
       }
     });
   }
+
+  // ---- Google Drive off-site backup (Settings page) -----------------------
+  const offsite = document.querySelector('[data-offsite]');
+  if (offsite) {
+    const $ = (sel) => offsite.querySelector(sel);
+    const statusEl = $('[data-offsite-status]');
+    const setStatus = (text, kind) => {
+      statusEl.textContent = text;
+      statusEl.className = 'backup-status' + (kind ? ' ' + kind : '');
+    };
+    const fmtSize = (b) => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+    const fmtName = (name) => {
+      const m = /^palipints-(\d{4})-(\d{2})-(\d{2})\.db$/.exec(name);
+      return m ? new Date(+m[1], m[2] - 1, +m[3]).toLocaleDateString(undefined, { dateStyle: 'medium' }) : name;
+    };
+    const post = async (url, body) => {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || data.ok === false) throw new Error(data.error || r.statusText);
+      return data;
+    };
+    // Run an async action with the button disabled and relabelled.
+    const busy = async (btn, label, fn) => {
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = label;
+      try { await fn(); } finally { btn.disabled = false; btn.textContent = orig; }
+    };
+
+    const render = (s) => {
+      $('[data-offsite-loading]').hidden = true;
+      const state = !s.rclone_installed ? 'not-installed' : s.connected ? 'connected' : 'disconnected';
+      offsite.querySelectorAll('[data-offsite-state]').forEach(el => {
+        el.hidden = el.dataset.offsiteState !== state;
+      });
+      if (state !== 'connected') return;
+
+      $('[data-offsite-last]').textContent = s.last_ok_at ? fmtDateTime(s.last_ok_at) : 'never';
+      const err = $('[data-offsite-error]');
+      const errText = s.list_error || s.last_error;
+      err.hidden = !errText;
+      err.textContent = errText ? 'Last attempt failed: ' + errText : '';
+
+      const table = $('[data-offsite-list]');
+      const tbody = table.querySelector('tbody');
+      tbody.replaceChildren();
+      (s.backups || []).forEach(b => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td></td><td></td><td><button type="button" class="btn btn-danger btn-sm">Restore</button></td>';
+        tr.children[0].textContent = fmtName(b.name);
+        tr.children[1].textContent = fmtSize(b.size_bytes);
+        tr.querySelector('button').addEventListener('click', (ev) => restore(ev.currentTarget, b.name));
+        tbody.appendChild(tr);
+      });
+      table.hidden = !(s.backups || []).length;
+    };
+
+    const refresh = async () => {
+      try {
+        const r = await fetch('/admin/api/offsite/status');
+        render(await r.json());
+      } catch (e) {
+        $('[data-offsite-loading]').textContent = 'Could not check Google Drive status.';
+      }
+    };
+
+    const restore = async (btn, name) => {
+      const ok = confirm(
+        'RESTORE FROM GOOGLE DRIVE\n\n' +
+        'This will REPLACE the current database with the copy from ' + fmtName(name) + '.\n' +
+        'All changes made since then will be lost.\n\n' +
+        'The current database will be copied to data/palipints.db.pre-restore\n' +
+        'as a one-time safety net.\n\n' +
+        'Are you sure you want to continue?'
+      );
+      if (!ok) return;
+      const typed = prompt('Final confirmation.\n\nType RESTORE (in capitals) to confirm. Anything else cancels.');
+      if ((typed || '').trim().toUpperCase() !== 'RESTORE') {
+        setStatus('Restore cancelled.', '');
+        return;
+      }
+      await busy(btn, 'Restoring…', async () => {
+        setStatus('Downloading from Google Drive and restoring…', '');
+        try {
+          await post('/admin/api/offsite/restore', { name, confirm: 'RESTORE' });
+          setStatus('Restored — reloading page…', 'success');
+          setTimeout(() => window.location.reload(), 1200);
+        } catch (e) {
+          setStatus('Restore failed: ' + e.message, 'error');
+        }
+      });
+    };
+
+    $('[data-offsite-connect]').addEventListener('click', (ev) => busy(ev.currentTarget, 'Starting…', async () => {
+      setStatus('', '');
+      try {
+        const data = await post('/admin/api/offsite/connect/start');
+        $('[data-offsite-auth-link]').href = data.auth_url;
+        $('[data-offsite-steps]').hidden = false;
+        $('[data-offsite-paste]').value = '';
+      } catch (e) {
+        setStatus('Could not start sign-in: ' + e.message, 'error');
+      }
+    }));
+
+    const finishBtn = $('[data-offsite-finish]');
+    const finish = () => busy(finishBtn, 'Connecting…', async () => {
+      try {
+        await post('/admin/api/offsite/connect/finish', { url: $('[data-offsite-paste]').value });
+        $('[data-offsite-steps]').hidden = true;
+        setStatus('Google Drive connected. Running the first backup…', 'success');
+        await refresh();
+        const nowBtn = $('[data-offsite-now]');
+        nowBtn.click();
+      } catch (e) {
+        setStatus(e.message, 'error');
+      }
+    });
+    finishBtn.addEventListener('click', finish);
+    // Enter in the paste box must not submit the surrounding Settings form.
+    $('[data-offsite-paste]').addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); finish(); }
+    });
+
+    $('[data-offsite-now]').addEventListener('click', (ev) => busy(ev.currentTarget, 'Uploading…', async () => {
+      setStatus('Uploading to Google Drive…', '');
+      try {
+        await post('/admin/api/offsite/now');
+        setStatus('Backup uploaded to Google Drive.', 'success');
+      } catch (e) {
+        setStatus('Backup failed: ' + e.message, 'error');
+      }
+      await refresh();
+    }));
+
+    $('[data-offsite-disconnect]').addEventListener('click', (ev) => {
+      if (!confirm('Disconnect Google Drive?\n\nWeekly uploads will stop. Copies already in your Drive are kept.')) return;
+      busy(ev.currentTarget, 'Disconnecting…', async () => {
+        try {
+          await post('/admin/api/offsite/disconnect');
+          setStatus('Google Drive disconnected.', '');
+        } catch (e) {
+          setStatus('Disconnect failed: ' + e.message, 'error');
+        }
+        await refresh();
+      });
+    });
+
+    refresh();
+  }
 })();

@@ -10,6 +10,7 @@ data/palibeerview.db
 data/palibeerview.db-journal
 data/backups/
 data/.secret_key
+data/rclone.conf
 data/images/breweries/*
 data/images/uploads/*
 data/images/beers/*

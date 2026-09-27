@@ -350,3 +350,33 @@ Press `Ctrl+Shift+R` in the kiosk window (via `xdotool`) or reboot the client. T
 ssh pi@palipints-client.local
 DISPLAY=:0 xdotool search --name "Chromium" key --window %@ ctrl+shift+r
 ```
+
+---
+
+## 11. Google Drive backup (optional, recommended)
+
+The app keeps a weekly backup at `data/backups/palipints.db.backup`, but it lives on the same SD card as the live DB. If the card dies, both go. Connect Google Drive and the Pi also uploads a copy **once a week**, keeping the **newest 4** (about a month of history):
+
+- `PaliPints/db/palipints-YYYY-MM-DD.db`: database snapshots
+- `PaliPints/images/`: uploaded logos and cached beer art
+
+It's a few MB in total, well inside the free 15 GB. PaliPints can only see files it created in your Drive, not anything else.
+
+### 11.1 Connect
+
+`install.sh` installs [rclone](https://rclone.org), which does the uploading (`update.sh` adds it to older installs). Then, from any phone or laptop on the bar's network:
+
+1. Open **Admin → Settings → Google Drive backup** and click **Connect Google Drive**.
+2. Click **Sign in with Google**, choose the account, and click **Allow**.
+3. The browser then shows a page that **can't load** (the address starts `http://127.0.0.1:53682/`). That's expected: Google is trying to hand the sign-in back to the Pi, but that address means "this device". Copy the **whole address** from the address bar.
+4. Paste it into the box on the Settings page and click **Finish**.
+
+The first backup runs straight away and the copy appears in the list. After that it runs every 7 days. **Back up to Drive now** runs one on demand. Finish step 4 within 10 minutes of clicking Connect, otherwise start again.
+
+The Google token is stored in `data/rclone.conf` (gitignored). **Disconnect** deletes it. Copies already in Drive are left alone.
+
+### 11.2 Restoring from Google Drive
+
+On the same Settings card, each copy in Drive has a **Restore** button. It downloads that copy, replaces the live database (the current one is saved to `data/palipints.db.pre-restore` first), and pulls back any images missing locally.
+
+After an SD card failure: flash a new card, run `install.sh` (§4), connect Google Drive again (11.1), then click **Restore** on the newest copy.

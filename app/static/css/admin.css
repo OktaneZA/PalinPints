@@ -515,6 +515,16 @@ textarea:focus-visible {
 .backup-status.success { color: var(--success); }
 .backup-status.error   { color: var(--danger); }
 
+.offsite-ok { color: var(--success); }
+.offsite-steps { margin: 12px 0 0; padding-left: 20px; line-height: 1.6; }
+.offsite-steps li + li { margin-top: 10px; }
+.offsite-paste { display: flex; gap: 8px; margin-top: 6px; }
+.offsite-paste input { flex: 1; min-width: 0; }
+.offsite-list { border-collapse: collapse; margin: 4px 0 8px; font-size: 14px; }
+.offsite-list th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 4px 16px 4px 0; }
+.offsite-list td { padding: 4px 16px 4px 0; border-top: 1px solid var(--border); }
+.offsite-list .btn { padding: 3px 10px; font-size: 12px; }
+
 /* Buttons */
 .btn {
   padding: 6px 14px; border-radius: 6px;

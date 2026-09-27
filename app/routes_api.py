@@ -5,6 +5,7 @@ from dataclasses import asdict
 
 from flask import Blueprint, jsonify, request
 
+from . import offsite
 from .backup import backup_info, backup_now, restore_from_backup
 from .db import close_db, get_db
 from .internetscraping import download_beer_image, download_brewery_logo, fetch_beer_detail, search_beers
@@ -204,4 +205,50 @@ def backup_restore():
     close_db()
 
     result = restore_from_backup()
+    return (jsonify(result), 200 if result.get("ok") else 500)
+
+
+# ---- Off-site backup (Google Drive) --------------------------------------
+
+@bp.route("/offsite/status")
+def offsite_status():
+    return jsonify(offsite.status())
+
+
+@bp.route("/offsite/connect/start", methods=["POST"])
+def offsite_connect_start():
+    result = offsite.start_connect()
+    return (jsonify(result), 200 if result.get("ok") else 500)
+
+
+@bp.route("/offsite/connect/finish", methods=["POST"])
+def offsite_connect_finish():
+    body = request.get_json(silent=True) or {}
+    result = offsite.finish_connect(body.get("url") or "")
+    return (jsonify(result), 200 if result.get("ok") else 400)
+
+
+@bp.route("/offsite/disconnect", methods=["POST"])
+def offsite_disconnect():
+    return jsonify(offsite.disconnect())
+
+
+@bp.route("/offsite/now", methods=["POST"])
+def offsite_run_now():
+    result = offsite.backup_now()
+    return (jsonify(result), 200 if result.get("ok") else 500)
+
+
+@bp.route("/offsite/restore", methods=["POST"])
+def offsite_restore():
+    """Restore the live DB from a Drive snapshot. Same RESTORE confirmation
+    rule as the local restore endpoint."""
+    body = request.get_json(silent=True) or {}
+    if (body.get("confirm") or "").strip().upper() != "RESTORE":
+        return jsonify({
+            "error": "missing or invalid confirmation",
+            "hint": 'send {"confirm": "RESTORE"} in the request body',
+        }), 400
+    close_db()
+    result = offsite.restore(body.get("name") or "")
     return (jsonify(result), 200 if result.get("ok") else 500)
