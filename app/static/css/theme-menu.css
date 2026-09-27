@@ -1,0 +1,59 @@
+/* Shared presentation for the four menu themes; each theme supplies tokens. */
+body {
+  background: var(--menu-bg);
+  color: var(--menu-fg);
+  font-family: var(--menu-body);
+}
+.display-header {
+  border-bottom: 2px solid var(--menu-accent);
+  padding-bottom: 18px;
+}
+.display-header h1 {
+  font-family: var(--menu-heading);
+  font-size: var(--menu-heading-size, 72px);
+  line-height: 1.1;
+  letter-spacing: var(--menu-heading-spacing, 2px);
+}
+.brand-logo { filter: var(--menu-logo-filter, none); }
+.beer-row { border-bottom: 1px var(--menu-rule-style, solid) var(--menu-rule); }
+.tap-separator {
+  border-top: 2px solid var(--menu-accent);
+  color: var(--menu-accent);
+  font: 700 36px/1.15 var(--menu-heading);
+  letter-spacing: 1px;
+}
+.cat-tag {
+  color: var(--menu-muted);
+  font-size: 18px;
+  font-weight: 700;
+  border-right: 1px solid var(--menu-rule);
+  padding-right: 10px;
+}
+.logo-slot { background: var(--menu-logo-bg); border: 1px solid var(--menu-rule); }
+.logo-slot.color-disc { border: 3px solid var(--menu-logo-bg); }
+.tap-num { color: var(--menu-accent); font-size: 32px; font-weight: 700; }
+.beer-name { font-weight: 700; }
+.line-2 { color: var(--menu-muted); }
+.brewery { font-weight: 700; }
+.prices .price { font-weight: 700; }
+.prices-header { color: var(--menu-muted); }
+.prices > .price-cell + .price-cell,
+.prices > .price-head + .price-head { border-left-color: var(--menu-rule); }
+.specials-panel, .events-panel {
+  background: var(--menu-panel);
+  border: 1px solid var(--menu-rule);
+  border-top: 3px solid var(--menu-accent);
+  border-radius: var(--menu-radius, 8px);
+}
+.specials-panel h2, .events-panel h2 {
+  font: 700 32px/1.15 var(--menu-heading);
+  letter-spacing: 1px;
+  color: var(--menu-accent);
+}
+.specials-panel li { border-bottom: 1px solid var(--menu-rule); }
+.s-title { font-size: 24px; font-weight: 700; }
+.s-desc { color: var(--menu-muted); margin-top: 4px; }
+.s-price { font-size: 26px; font-weight: 700; }
+.ev-date, .ev-location, .display-footer { color: var(--menu-muted); }
+.empty img { filter: var(--menu-logo-filter, none); }
+.empty p { font: 700 40px var(--menu-heading); }

@@ -6,6 +6,9 @@
   <title>Draft List</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/display.css') }}">
+  {% if settings.theme in ['palindrome4', 'palindrome5', 'editorial', 'chalkboard'] %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-menu.css') }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-' + settings.theme + '.css') }}">
 </head>
 <body data-version="{{ version_hash }}"
@@ -41,8 +44,8 @@
   {% if ns.pint %}{% set _ = price_cols.append(('pint', 'pint')) %}{% endif %}
   {% if ns.takeaway %}{% set _ = price_cols.append(('takeaway', 'takeaway')) %}{% endif %}
 
-  <main class="display-body">
-    <div class="categories" id="categories" style="--price-cols: {{ price_cols|length }};">
+  <main class="display-body{% if not specials and not events %} display-body--full{% endif %}">
+    <div class="categories{% if not price_cols %} categories--no-prices{% endif %}" id="categories" style="--price-cols: {{ price_cols|length }};">
       {% if not grouped %}
         <div class="empty">
           <img src="{{ url_for('static', filename='img/palindrome-logo.png') }}" onerror="this.style.display='none'" alt="">
@@ -78,10 +81,10 @@
             <div class="tap-num">{{ tap.tap_number }}</div>
             <div class="beer-main">
               <div class="line-1">
-                <span class="brewery">{{ tap.brewery }}</span>
                 <span class="beer-name">{{ tap.beer_name }}</span>
               </div>
               <div class="line-2">
+                <span class="brewery">{{ tap.brewery }}</span>
                 {% if tap.sub_style %}<span>{{ tap.sub_style }}</span>{% endif %}
                 {% if tap.abv is not none %}<span>{{ tap.abv }}% ABV</span>{% endif %}
                 {% if tap.ibu is not none %}<span>{{ tap.ibu }} IBU</span>{% endif %}
@@ -105,6 +108,7 @@
       {% endfor %}
     </div>
 
+    {% if specials or events %}
     <aside class="side-panels">
       {% if specials %}
       <section class="specials-panel">
@@ -128,7 +132,7 @@
         <h2>EVENTS</h2>
         <ul>
           {% for e in events %}
-            <li class="event-item">
+            <li class="event-item{% if not e.url %} event-item--no-qr{% endif %}">
               <div class="ev-main">
                 <div class="ev-name">{{ e.name }}</div>
                 {% if e.event_date %}
@@ -148,6 +152,7 @@
       </section>
       {% endif %}
     </aside>
+    {% endif %}
   </main>
 
   <footer class="display-footer">
@@ -158,6 +163,7 @@
   </footer>
   </div>
 
+  <script src="{{ url_for('static', filename='js/pagination.js') }}"></script>
   <script src="{{ url_for('static', filename='js/display.js') }}"></script>
 </body>
 </html>

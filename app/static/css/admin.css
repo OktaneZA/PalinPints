@@ -536,7 +536,7 @@ textarea:focus-visible {
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .btn:active:not(:disabled) { filter: brightness(0.92); }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color: var(--accent-fg, #fff); }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.05); }
 .btn-secondary { background: var(--card); color: var(--fg); border-color: var(--border); }
 .btn-secondary:hover:not(:disabled) { filter: brightness(0.97); }
@@ -722,7 +722,7 @@ div.special-form {
   border-color: #444;
 }
 .theme-card-chalkboard {
-  background: #2c3032;
+  background: #252b2d;
   color: #f3efe6;
   border-color: #444;
 }
@@ -742,14 +742,14 @@ div.special-form {
   border-color: #688531;
 }
 .theme-card-pali4 {
-  background: #E9F1DA;
-  color: #080808;
-  border-color: #93BB48;
+  background: #eef2e4;
+  color: #182014;
+  border-color: #526c28;
 }
 .theme-card-pali5 {
-  background: #080808;
-  color: #93BB48;
-  border-color: #93BB48;
+  background: #10120e;
+  color: #eef2e4;
+  border-color: #a6ca63;
 }
 .theme-card-pali6 {
   background: linear-gradient(135deg, #93BB48 0%, #688531 100%);
@@ -769,7 +769,7 @@ div.special-form {
 .theme-card-editorial {
   background: #ffffff;
   color: #0a0a0a;
-  border-color: #0a0a0a;
+  border-color: #526c28;
 }
 
 /* Preview each theme's display heading font on the card name, so the
@@ -922,13 +922,14 @@ body[data-theme="palindrome4"] {
   --border: #b6c98e;
   --accent: #688531;
   --accent-glow: rgba(104, 133, 49, 0.2);
-  --header-bg: #688531;
+  --header-bg: #182014;
   --header-fg: #f5f9eb;
   --header-muted: #d2dfb1;
   --input-bg: #ffffff;
 }
 
 body[data-theme="palindrome5"] {
+  --accent-fg: #10120e;
   --fg: #E9F1DA;
   --muted: #a8b89a;
   --bg: #080808;
@@ -997,10 +998,31 @@ body[data-theme="editorial"] {
   --card: #f6f5f2;
   --surface-soft: #ececec;
   --border: #d0d0d0;
-  --accent: #0a0a0a;
+  --accent: #526c28;
   --accent-glow: rgba(10, 10, 10, 0.2);
   --header-bg: #0a0a0a;
   --header-fg: #ffffff;
   --header-muted: #d0d0d0;
   --input-bg: #ffffff;
+}
+
+/* Forms remain usable when staff edit the menu from a phone or tablet. */
+.special-form label, .settings-form fieldset { min-width: 0; }
+.special-form input { min-width: 0; width: 100%; }
+.special-form input[type=checkbox] { width: auto; }
+@media (max-width: 900px) {
+  .admin-header { flex-wrap: wrap; gap: 12px; }
+  .admin-header nav { flex-wrap: wrap; gap: 6px; }
+  .special-form, div.special-form, .event-form,
+  .bl-sync-summary, .bl-edit-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .prices-fieldset { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  main { padding: 16px; }
+  .admin-header { padding: 14px 16px; }
+  .special-form, div.special-form, .event-form,
+  .settings-form .row-pair, .bl-sync-summary, .bl-edit-form { grid-template-columns: minmax(0, 1fr); }
+  .bl-edit-desc, .bl-edit-home { grid-column: auto; }
+  .theme-option { min-width: 0; flex-basis: 100%; }
+  .settings-form input { max-width: 100%; }
 }

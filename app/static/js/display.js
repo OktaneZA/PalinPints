@@ -1,6 +1,6 @@
 (() => {
   const body = document.body;
-  const beersPerPage = parseInt(body.dataset.beersPerPage || '12', 10);
+  const beersPerPage = Math.max(1, parseInt(body.dataset.beersPerPage || '12', 10) || 12);
   const rotationMs = (parseInt(body.dataset.rotationInterval || '15', 10)) * 1000;
   const pollMs = 5000;
   const STAGE_W = 1920, STAGE_H = 1080;
@@ -25,6 +25,8 @@
   let pageCount = 1;
   let rotateTimer = null;
   let transitioning = false;
+  let pageMap = null;
+  let layoutPending = false;
 
   const rows = () => Array.from(document.querySelectorAll('.beer-row, .tap-separator'));
   const indicator = document.getElementById('pageIndicator');
@@ -39,24 +41,31 @@
     if (clockNowEl) clockNowEl.textContent = fmtDateTime(new Date());
   }
 
-  // Pack elements into pages, refusing to place a separator on the last
-  // slot of a page (push it to the next page so it never orphans).
+  // Measure in logical stage pixels (offsetHeight), not scaled screen pixels.
+  // Reveal and re-hide synchronously so measuring other pages never flashes.
   function computePages() {
     const all = rows();
+    const categories = document.getElementById('categories');
+    const header = categories.querySelector('.prices-header');
+    const gap = parseFloat(getComputedStyle(categories).rowGap) || 0;
+    all.forEach(el => el.classList.remove('is-hidden'));
+    const items = all.map(el => {
+      const style = getComputedStyle(el);
+      return {
+        el,
+        separator: el.classList.contains('tap-separator'),
+        height: el.offsetHeight + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0),
+      };
+    });
+    const available = categories.clientHeight - (header ? header.offsetHeight + gap : 0);
+    const pages = window.packDisplayPages(items, available, beersPerPage, gap);
     const pageOf = new Map();
-    let page = 0, slot = 0;
-    for (const el of all) {
-      const isSep = el.classList.contains('tap-separator');
-      if (slot >= beersPerPage) { page++; slot = 0; }
-      if (isSep && slot === beersPerPage - 1) { page++; slot = 0; }
-      pageOf.set(el, page);
-      slot++;
-    }
-    return { all, pageOf, count: Math.max(1, page + 1) };
+    pages.forEach((page, index) => page.forEach(item => pageOf.set(item.el, index)));
+    return { all, pageOf, count: Math.max(1, pages.length) };
   }
 
   function applyPage(pageMap) {
-    const { all, pageOf } = pageMap || computePages();
+    const { all, pageOf } = pageMap;
     all.forEach((el) => {
       el.classList.toggle('is-hidden', pageOf.get(el) !== currentPage);
     });
@@ -64,15 +73,18 @@
   }
 
   function paginate() {
+    if (transitioning) { layoutPending = true; return; }
     const pm = computePages();
+    pageMap = pm;
     pageCount = pm.count;
     if (currentPage >= pageCount) currentPage = 0;
     applyPage(pm);
+    startRotation();
   }
 
   function transitionToPage(targetPage) {
     if (transitioning) return;
-    const pm = computePages();
+    const pm = pageMap;
     pageCount = pm.count;
     if (targetPage >= pageCount) targetPage = 0;
     if (targetPage === currentPage) return;
@@ -106,7 +118,10 @@
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           newVisible.forEach((el) => el.classList.remove('is-pre-enter'));
-          setTimeout(() => { transitioning = false; }, fadeMs);
+          setTimeout(() => {
+            transitioning = false;
+            if (layoutPending) { layoutPending = false; paginate(); }
+          }, fadeMs);
         });
       });
     }, fadeMs);
@@ -143,7 +158,10 @@
   rescale();
   window.addEventListener('resize', rescale);
   paginate();
-  startRotation();
+  // Web fonts and images may change row/header heights after first paint.
+  document.fonts.ready.then(paginate);
+  window.addEventListener('load', paginate);
+  new ResizeObserver(() => paginate()).observe(document.getElementById('categories'));
   tickClock();
   setInterval(tickClock, 1000);
   setInterval(pollState, pollMs);

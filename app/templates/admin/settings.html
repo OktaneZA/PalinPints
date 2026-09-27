@@ -28,20 +28,22 @@
   {% set theme_choices = [
     ('marble',      'Marble',       'Light marble, premium', 'theme-card-marble'),
     ('neon',        'Neon',         'Dark with glow',        'theme-card-neon'),
-    ('chalkboard',  'Chalkboard',   'Rustic pub feel',       'theme-card-chalkboard'),
+    ('chalkboard',  'Chalkboard',   'Traditional taproom · clear text, amber accents', 'theme-card-chalkboard'),
     ('palindrome1', 'Palindrome 1', 'Light brand',           'theme-card-pali1'),
     ('palindrome2', 'Palindrome 2', 'Dark brand',            'theme-card-pali2'),
     ('palindrome3', 'Palindrome 3', 'Green forward',         'theme-card-pali3'),
-    ('palindrome4', 'Palindrome 4', 'Light · Fragment Glare', 'theme-card-pali4'),
-    ('palindrome5', 'Palindrome 5', 'Dark · Fragment Glare',  'theme-card-pali5'),
+    ('palindrome4', 'Palindrome 4', 'Light brewery menu · cream and olive', 'theme-card-pali4'),
+    ('palindrome5', 'Palindrome 5', 'Refined Palindrome · dark, no glow', 'theme-card-pali5'),
     ('palindrome6', 'Palindrome 6', 'Green · Fragment Glare', 'theme-card-pali6'),
     ('newsprint',   'Newsprint',    'Vintage newspaper masthead', 'theme-card-newsprint'),
     ('terminal',    'Terminal',     'Retro CRT phosphor green',   'theme-card-terminal'),
-    ('editorial',   'Editorial',    'Swiss minimalist',           'theme-card-editorial'),
+    ('editorial',   'Editorial',    'Clear information board · white and green', 'theme-card-editorial'),
   ] %}
 
   <fieldset>
     <legend>Day / night switching</legend>
+    <p><button type="button" class="btn btn-secondary" id="brandThemePair">Use recommended day / night pair</button></p>
+    <p class="hint">Palindrome 4 by day, Palindrome 5 by night. Save settings to apply.</p>
     <label class="switch">
       <input type="checkbox" name="day_night_auto" value="1" id="dayNightAuto"
              {% if settings.day_night_auto %}checked{% endif %}>
@@ -144,6 +146,7 @@
     </label>
     <label>Beers per page
       <input type="number" name="beers_per_page" min="6" max="14" value="{{ settings.beers_per_page }}">
+      <span class="muted">Maximum per page; fewer are shown when longer names need more space.</span>
     </label>
     <label>Page rotation interval (seconds)
       <input type="number" name="page_rotation_interval" min="5" max="120" value="{{ settings.page_rotation_interval }}">
@@ -339,6 +342,12 @@
       }
     };
     toggle.addEventListener('change', apply);
+    document.getElementById('brandThemePair').addEventListener('click', () => {
+      document.querySelector('input[name="day_theme"][value="palindrome4"]').checked = true;
+      document.querySelector('input[name="night_theme"][value="palindrome5"]').checked = true;
+      toggle.checked = true;
+      apply();
+    });
     apply();
   })();
 

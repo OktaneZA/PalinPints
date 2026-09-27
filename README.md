@@ -55,25 +55,41 @@ To drive a second TV from a separate Pi (typically a **Pi Zero 2 W**), run [`scr
 
 ## Display themes
 
-Nine themes are available, switchable from the admin Settings page. Each works with both display modes (brewery logo or beer-color disc):
+Twelve themes are available, switchable from the admin Settings page. Each works with both display modes (brewery logo or beer-color disc):
 
 | Theme | Look |
 |---|---|
 | Marble | Light marble background, premium feel |
 | Neon | Black with pink/cyan gradient border, glowing accents |
-| Chalkboard | Slate background with chalk-style text |
+| Chalkboard | Charcoal, warm white text, amber accents; handwritten headings |
 | Palindrome 1 | Light off-white green, brand palette (Bebas Neue) |
 | Palindrome 2 | Vampire black with main-green pop (Bebas Neue) |
 | Palindrome 3 | Green-forward, brand-immersive (Bebas Neue) |
-| Palindrome 4 | Light brand, PP Fragment Glare + Alegreya Sans |
-| Palindrome 5 | Dark brand, PP Fragment Glare + Alegreya Sans |
+| Palindrome 4 | Light brewery menu: cream-green, olive accents, Fragment Glare headings |
+| Palindrome 5 | Refined dark brand: cream text, green accents, no glow |
 | Palindrome 6 | Green-forward, PP Fragment Glare + Alegreya Sans |
+| Newsprint | Vintage newspaper masthead |
+| Terminal | Retro green terminal |
+| Editorial | Clear information board: white, dark text, green accents |
 
 The theme picker on the Settings page previews each theme's heading font.
+
+Beer names appear above brewery and style details. The display measures row
+heights after fonts load and fits each page to the available space; **Beers per
+page** is a maximum. Guest headings stay with their first beer. Empty specials/
+events columns collapse so the beer list can use the full width.
+
+Palindrome 4, Palindrome 5, Editorial and Chalkboard share presentation rules
+in `theme-menu.css`; their individual stylesheets define colour and typography
+tokens.
 
 ### Day / night switching
 
 There is a single toggle on the Settings page — **Switch theme automatically between day and night** — that gates the whole feature.
+
+The **Use recommended day / night pair** button selects Palindrome 4 for day,
+Palindrome 5 for night and enables switching. Save settings to apply; configure
+location or override times for the schedule.
 
 - **Off (default)** — the display always uses one theme. The Settings page shows a single "Theme" picker.
 - **On** — picks `day_theme` between sunrise (or the day-start override) and 30 min before sunset (or the night-start override), and `night_theme` otherwise. The Settings page shows separate Day-theme / Night-theme pickers and a Location & times block (lat/lon auto-detect from IP, plus manual HH:MM overrides). Sunrise/sunset is looked up once a week from sunrise-sunset.org.
@@ -103,6 +119,14 @@ The display shows a Twemoji-based holiday icon in the top-right around Christmas
 The state snapshot includes the active holiday in its version hash, so a kiosk left running overnight automatically reloads when the date rolls in or out of a holiday window — no admin intervention required.
 
 ## Project layout
+
+Regression checks (Python dependencies from `requirements.txt`; Node for the
+JavaScript checks):
+
+```bash
+python -m unittest discover -s tests -v
+node --test tests/*.test.cjs
+```
 
 ```
 app/                Flask app: routes, templates, static assets
